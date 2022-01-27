@@ -1,5 +1,7 @@
 grammar fbk;
 
+top_level: expr EOF;
+
 fragment DIGIT_HEAD: [1-9];
 fragment DIGIT: [0-9];
 INT: DIGIT_HEAD DIGIT* | DIGIT;
@@ -15,14 +17,18 @@ CHAR_LITERAL: '\'' CHAR '\'';
 WS: [\n\r\t ] -> skip;
 
 nat: INT;
-double: INT '.' INT;
+real: INT '.' INT;
 bool: 'true' | 'false';
 str: STR_LITERAL;
-char: CHAR_LITERAL;
-literal: nat | double | bool | str | char;
+chr: CHAR_LITERAL;
 IDENTIFIER: IDENT_HEAD IDENT_CHAR*;
 
-expr: expr10 (switch_expression | );
+literal: nat | real | bool | str | chr;
+
+// Expressions
+
+expr: expr11 (switch_expression | );
+expr11 : expr10 (chained_method_invocation | );
 expr10 : expr9 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr9;
 expr9 : expr8 | expr8 '||' expr9;
 expr8 : expr7 | expr7 '&&' expr8;
@@ -36,6 +42,8 @@ expr1 : <assoc=right> expr0 | expr0 '^' expr1;
 expr0: term | term ('+' | '-') expr0;
 term: factor | factor ('*' | '/' | '%') term;
 factor: '(' expr ')' | primary;
+
+// Primaries
 
 primary: '!' expr
        | ('+' | '-') expr
@@ -53,12 +61,18 @@ function_call_argument_clause: '(' function_call_argument_list? ')';
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
 function_call_argument: (IDENTIFIER ':')? expr;
 
+chained_method_invocation: function_call_primary+;
+
+// Types
+
 type: function_type | array_type | type_identifier | tuple_type;
 function_type: tuple_type '->' type;
 tuple_type: '(' IDENTIFIER (',' IDENTIFIER)+ ')';
 array_type: '[' type ']';
 type_identifier: IDENTIFIER;
 type_annotation: ':' type;
+
+// Patterns
 
 pattern: identifier_pattern type_annotation?
        | wildcard_pattern
@@ -80,6 +94,8 @@ slice_subscript_part: reverse_subscript | expr;
 switch_expression: 'switch' '{' switch_expr_arms '}';
 switch_expr_arms: switch_expr_arm+;
 switch_expr_arm: literal '=>' expr;
+
+// Statements
 
 statements: statement+;
 
@@ -110,10 +126,10 @@ switch_statement: 'switch' expr '{' switch_cases? '}';
 switch_cases: switch_case+;
 switch_case: case_label '{'? statements '}'?
            | default_label '{'? statement '}'?;
-case_label: 'case' case_item_list '=>';
+case_label: 'case' case_item_list ':';
 case_item_list: case_item (',' case_item)*;
 case_item: literal;
-default_label: 'default' '=>';
+default_label: 'default' ':';
 
 control_transfer_statement: break_statement | continue_statement | fallthrough_statement | return_statement;
 break_statement: 'break';
@@ -124,6 +140,8 @@ return_statement: 'return' expr?;
 do_statement: 'do' code_block;
 
 code_block: '{' statements? '}';
+
+// Declarations
 
 declaration: constant_declaration
            | variable_declaration
@@ -138,6 +156,8 @@ pattern_initializer: simple_pattern_initializer | destruct_pattern_initializer;
 simple_pattern_initializer: IDENTIFIER type_annotation? initializer;
 destruct_pattern_initializer: tuple_pattern initializer;
 initializer: '=' expr;
+
+// Functions
 
 function_declaration: function_head function_name generic_parameter_clause? function_signature function_body;
 
