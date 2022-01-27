@@ -1,0 +1,21 @@
+// primary
+
+27.5
+14
+false
+'c'
+"hello"
+
+[1,2,3,4,5]
+['a', 'b', c]
+
+foo
+bar: int
+fst[0]
+_
+list[2..3]
+
+collatz(n: 3)
+concat("hello", "world")
+one()
+zip(list, [1,2,3,4,5])

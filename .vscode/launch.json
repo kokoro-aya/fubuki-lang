@@ -8,10 +8,10 @@
             "type": "antlr-debug",
             "name": "Debug .fbk Session",
             "request": "launch",
-            "input": "input.fbk",
-            "grammar": "fbk.g4",
+            "input": "grammar/input.fbk",
+            "grammar": "grammar/fbk.g4",
             "startRule": "top_level", 
-            "printParseTree": true,
+            "printParseTree": false,
             "visualParseTree": true,
         }
     ]

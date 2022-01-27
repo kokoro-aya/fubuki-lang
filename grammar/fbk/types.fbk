@@ -1,0 +1,21 @@
+// function types
+
+(int) -> void
+() -> (real, int)
+(bool, real) -> [real]
+(a, (a) -> b) -> b
+([a], (a) -> b) -> [b]
+
+// array types
+
+[int]
+[a]
+[(a, b)]
+[(int) -> void]
+
+// tuple types
+
+(a, b)
+(int, real)
+(a, (a) -> b)
+((a, b), (a) -> b)

@@ -1,0 +1,21 @@
+// patterns
+
+foo
+fo_oz
+_bar: int
+
+(12, b: int)
+("foo", 2, "bar", 4)
+(a: real, b[4])
+(_, _)
+
+a[b]
+c[12]
+d[6 + 7]
+foo[^1]
+foo[1..]
+foo[..1]
+foo[1..4]
+foo[^6..]
+foo[a + b .. 12 / 4 + 3 * 3]
+

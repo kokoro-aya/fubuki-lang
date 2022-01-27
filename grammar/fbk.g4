@@ -40,14 +40,13 @@ expr3 : expr2 | expr2 '++' expr3;
 expr2 : expr1 | expr1 ('<<' | '>>') expr2;
 expr1 : <assoc=right> expr0 | expr0 '^' expr1;
 expr0: term | term ('+' | '-') expr0;
-term: factor | factor ('*' | '/' | '%') term;
+term: subterm | subterm ('*' | '/' | '%') term;
+subterm: ('!' | '+' | '-') factor;
 factor: '(' expr ')' | primary;
 
 // Primaries
 
-primary: '!' expr
-       | ('+' | '-') expr
-       | literal_primary
+primary: literal_primary
        | variable_primary
        | function_call_primary;
 
@@ -67,7 +66,8 @@ chained_method_invocation: function_call_primary+;
 
 type: function_type | array_type | type_identifier | tuple_type;
 function_type: tuple_type '->' type;
-tuple_type: '(' IDENTIFIER (',' IDENTIFIER)+ ')';
+tuple_type: '(' tuple_argument_list? ')';
+tuple_argument_list: type (',' type)*;
 array_type: '[' type ']';
 type_identifier: IDENTIFIER;
 type_annotation: ':' type;
@@ -81,8 +81,9 @@ pattern: identifier_pattern type_annotation?
 
 identifier_pattern: IDENTIFIER;
 wildcard_pattern: '_';
-tuple_pattern: '(' tuple_pattern_elements? ')';
-tuple_pattern_elements: IDENTIFIER type_annotation? | '_';
+tuple_pattern: '(' tuple_pattern_elements ')';
+tuple_pattern_elements: tuple_pattern_element (',' tuple_pattern_element)*;
+tuple_pattern_element: IDENTIFIER type_annotation? | '_';
 subscript_pattern: IDENTIFIER '[' subscript ']';
 subscript: IDENTIFIER | literal | reverse_subscript | slice_subscript | expr;
 reverse_subscript: '^' expr;
