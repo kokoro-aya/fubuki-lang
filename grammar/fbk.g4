@@ -48,7 +48,8 @@ factor: '(' expr ')' | primary;
 
 primary: literal_primary
        | variable_primary
-       | function_call_primary;
+       | function_call_primary
+       | function_declaration;
 
 literal_primary: literal | array_literal;
 array_literal: '[' expr (',' expr) ']';
@@ -92,9 +93,10 @@ slice_subscript: slice_subscript_part '..' slice_subscript_part
                | slice_subscript_part '..';
 slice_subscript_part: reverse_subscript | expr;
 
-switch_expression: 'switch' '{' switch_expr_arms '}';
-switch_expr_arms: switch_expr_arm+;
-switch_expr_arm: literal '=>' expr;
+switch_expression: 'switch' '{' switch_expr_arm+ '}';
+switch_expr_arm: literal_arm | default_arm;
+default_arm: '_' '=>' expr;
+literal_arm: literal '=>' expr;
 
 // Statements
 
@@ -173,7 +175,7 @@ parameter_clause: '(' parameter_list? ')';
 parameter_list: parameter (',' parameter)*;
 parameter: default_name? parameter_name type_annotation default_argument_clause?;
 default_name: '_' | IDENTIFIER;
-parameter_name: IDENTIFIER;
+parameter_name: '?' | IDENTIFIER;
 default_argument_clause: initializer;
 
 generic_parameter_clause: '<' generic_parameter_list '>';

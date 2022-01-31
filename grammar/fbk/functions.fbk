@@ -1,0 +1,22 @@
+// functions
+
+fn concat_str(head s1: str, tail s2: str): str {
+    s1 ++ s2
+}
+
+fn one() => 1
+
+fn length<a>(_ xs: [a]): int {
+    var i = 0
+    for x in xs { i += 1 }
+    return i
+}
+
+fn lengthi<a>(xs: [a]): int {
+    return xs.reduce(0, fn (acc: int, ?: a) => acc + 1)
+}
+
+fn show(a: int = 2, b: int = 1, c: int = 0)
+    => a.str() + " " + b.str() + " " + c.str()
+
+
