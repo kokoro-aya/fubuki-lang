@@ -118,7 +118,7 @@ tokenize ('"' : xs) n m r p = (Token (Str str) r p : tripleFst (tokenize xs' n m
 
 tokenize ('\\' : '(' : xs) n m r p = (Token LINTERP r p : tripleFst (tokenize xs n (n:m) r (p + 2)), n, m)
 
-tokenize ('\\' : x : xs) n m r p | isIdentHead x = (Token LINTERP r p : Token (matchCharacterizedToken (x : t)) r p : Token RINTERP r (p + length t + 1) : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
+tokenize ('\\' : x : xs) n m r p | isIdentHead x = (Token LINTERP r p : matchCharacterizedToken (x : t) r p ++ Token RINTERP r (p + length t + 1) : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
         (t, xs') = span isIdentChar xs
 
@@ -128,9 +128,9 @@ tokenize (x : xs) n m r p | x == '\n' = (tripleFst (tokenize xs n m (r + 1) posB
 
 tokenize (x : xs) n m r p | isSpace x = (tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize (x : xs) n m r p | isIdentHead x = (Token (matchCharacterizedToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
+tokenize (x : xs) n m r p | isIdentHead x = (matchCharacterizedToken (x : t) r p ++ tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
-        (t, xs') = span isIdentChar xs
+        (t, xs') = span (\x -> isIdentChar x || x `elem` "<>") xs
 
 tokenize (x : xs) n m r p | isSymbolChar x = (Token (matchSymbolToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
@@ -138,27 +138,34 @@ tokenize (x : xs) n m r p | isSymbolChar x = (Token (matchSymbolToken (x : t)) r
 
 tokenize xs n m r p = error $ "unrecognized token: " ++ show xs
 
-matchCharacterizedToken :: String -> TokenType
-matchCharacterizedToken "_" = ULINE
-matchCharacterizedToken "break" = BREAK
-matchCharacterizedToken "case" = CASE
-matchCharacterizedToken "continue" = CONTINUE
-matchCharacterizedToken "default" = DEFAULT
-matchCharacterizedToken "else" = ELSE
-matchCharacterizedToken "fallthrough" = FALLTHRU
-matchCharacterizedToken "false" = FLS
-matchCharacterizedToken "for" = FOR
-matchCharacterizedToken "fn" = FN
-matchCharacterizedToken "in" = IN
-matchCharacterizedToken "if" = IF
-matchCharacterizedToken "return" = RETURN
-matchCharacterizedToken "repeat" = REPEAT
-matchCharacterizedToken "switch" = SWITCH
-matchCharacterizedToken "true" = TRU
-matchCharacterizedToken "val" = VAL
-matchCharacterizedToken "var" = VAR
-matchCharacterizedToken "while" = WHILE
-matchCharacterizedToken s = Ident s
+matchCharacterizedToken :: String -> Int -> Int -> [Token]
+                                  -- Row of beginning of the sequence
+                                         -- Position of beginning of the sequence
+matchCharacterizedToken "_" r p = [Token ULINE r p]
+matchCharacterizedToken "break" r p = [Token BREAK r p]
+matchCharacterizedToken "case" r p = [Token CASE r p]
+matchCharacterizedToken "continue" r p = [Token CONTINUE r p]
+matchCharacterizedToken "default" r p = [Token DEFAULT r p]
+matchCharacterizedToken "else" r p = [Token ELSE r p]
+matchCharacterizedToken "fallthrough" r p = [Token FALLTHRU r p]
+matchCharacterizedToken "false" r p = [Token FLS r p]
+matchCharacterizedToken "for" r p = [Token FOR r p]
+matchCharacterizedToken "fn" r p = [Token FN r p]
+matchCharacterizedToken "in" r p = [Token IN r p]
+matchCharacterizedToken "if" r p = [Token IF r p]
+matchCharacterizedToken "return" r p = [Token RETURN r p]
+matchCharacterizedToken "repeat" r p = [Token REPEAT r p]
+matchCharacterizedToken "switch" r p = [Token SWITCH r p]
+matchCharacterizedToken "true" r p = [Token TRU r p]
+matchCharacterizedToken "val" r p = [Token VAL r p]
+matchCharacterizedToken "var" r p = [Token VAR r p]
+matchCharacterizedToken "while" r p = [Token WHILE r p]
+matchCharacterizedToken s r p= [Token (Ident name) r p]
+    where (name, clause) = span isIdentChar s
+          tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
+          tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
+          tokenizeClause xs r p = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
+              where (ax, bx) = span isIdentChar xs
 
 matchSymbolToken :: String -> TokenType
 matchSymbolToken "=>" = LAM_ARR

@@ -16,6 +16,7 @@ data TokenType = Numeric String
             -- | UChr String -- won't achieve unicode in simple implementation
             | Ident String
             | TRU | FLS
+            | GENERIC_LEFT | GENERIC_RIGHT              -- < > 
             | LPAREN | RPAREN                           -- ( )
             | LBRACKET | RBRACKET                       -- [ ]
             | LBRACE | RBRACE                           -- { }

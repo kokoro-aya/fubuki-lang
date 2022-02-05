@@ -29,7 +29,7 @@ literal: nat | real | bool | str | chr;
 
 expr: expr11 (switch_expression | );
 expr11 : expr10 (chained_method_invocation | );
-expr10 : expr9 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr9;
+expr10 : expr9 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr9 | lambda_expression;
 expr9 : expr8 | expr8 '||' expr9;
 expr8 : expr7 | expr7 '&&' expr8;
 expr7 : expr6 | expr6 '^^' expr7;
@@ -97,6 +97,8 @@ switch_expression: 'switch' '{' switch_expr_arm+ '}';
 switch_expr_arm: literal_arm | default_arm;
 default_arm: '_' '=>' expr;
 literal_arm: literal '=>' expr;
+
+lambda_expression: function_declaration; // lambda only
 
 // Statements
 
