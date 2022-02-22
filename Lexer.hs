@@ -92,7 +92,7 @@ tokenize ('(' : xs) n m r p = (Token LPAREN r p : tripleFst (tokenize xs (n + 1)
 tokenize (')' : xs) n m r p | n == head m = let (xx, xxs) = parseSimpleString xs in
                                         (Token RINTERP r p : Token (Str xx) r (p + 1) : tripleFst (tokenize xxs n (tail m) r (p + 2)), n, m)
                       | n > head m = (Token RPAREN r p : tripleFst (tokenize xs (n - 1) m r (p + 1)), n, m)
-                      | otherwise = error "negative parenthesis balance encountered"
+                      | otherwise = error $ "negative parenthesis balance encountered, at row " ++ show r ++ ", column " ++ show p ++ "."
 tokenize ('[' : xs) n m r p = (Token LBRACKET r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize (']' : xs) n m r p = (Token RBRACKET r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize ('{' : xs) n m r p = (Token LBRACE r p   : tripleFst (tokenize xs n m r (p + 1)), n, m)
@@ -136,7 +136,7 @@ tokenize (x : xs) n m r p | isSymbolChar x = (Token (matchSymbolToken (x : t)) r
     where
         (t, xs') = span isSymbolChar xs
 
-tokenize xs n m r p = error $ "unrecognized token: " ++ show xs
+tokenize xs n m r p = error $ "unrecognized token: " ++ show xs ++ ", at row " ++ show r ++ ", column " ++ show p ++ "." 
 
 matchCharacterizedToken :: String -> Int -> Int -> [Token]
                                   -- Row of beginning of the sequence
@@ -160,12 +160,15 @@ matchCharacterizedToken "true" r p = [Token TRU r p]
 matchCharacterizedToken "val" r p = [Token VAL r p]
 matchCharacterizedToken "var" r p = [Token VAR r p]
 matchCharacterizedToken "while" r p = [Token WHILE r p]
-matchCharacterizedToken s r p= [Token (Ident name) r p]
+matchCharacterizedToken s r p= Token (Ident name) r p: tokenizeClause clause r (p + length name)
     where (name, clause) = span isIdentChar s
+          tokenizeClause "" r p = []
           tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
           tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
-          tokenizeClause xs r p = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
+          -- need to specify if the first char is an ident char, otherwise it will loop
+          tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
               where (ax, bx) = span isIdentChar xs
+          tokenizeClause (x:_) _ _ = error $ "unexpected character: " ++ show x ++ " in generic clause at row " ++ show r ++ ", column " ++ show p ++ "."
 
 matchSymbolToken :: String -> TokenType
 matchSymbolToken "=>" = LAM_ARR
@@ -204,7 +207,7 @@ matchSymbolToken "++" = APPEND
 matchSymbolToken "." = DOT
 matchSymbolToken "::" = DOUBLE_COLUMN
 matchSymbolToken ":" = COLUMN
-matchSymbolToken _ = error "customized symbol is not supported"
+matchSymbolToken x = error $ "customized symbol is not supported: " ++ show x
 
 lexing :: String -> [Token]
 lexing x = tripleFst . tokenize x 0 [0] lineBegin $ posBegin

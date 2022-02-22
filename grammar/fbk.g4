@@ -164,7 +164,7 @@ initializer: '=' expr;
 
 // Functions
 
-function_declaration: function_head function_name generic_parameter_clause? function_signature function_body;
+function_declaration: function_head function_name? generic_parameter_clause? function_signature function_body;
 
 function_head: 'fn';
 function_name: IDENTIFIER;
@@ -175,7 +175,7 @@ function_body: code_block | '=>' expr;
 
 parameter_clause: '(' parameter_list? ')';
 parameter_list: parameter (',' parameter)*;
-parameter: default_name? parameter_name type_annotation default_argument_clause?;
+parameter: default_name? parameter_name type_annotation? default_argument_clause?; // allow for lambda usage
 default_name: '_' | IDENTIFIER;
 parameter_name: '?' | IDENTIFIER;
 default_argument_clause: initializer;
