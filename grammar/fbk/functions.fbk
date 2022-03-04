@@ -1,5 +1,7 @@
 // functions
 
+// Tested OK
+
 fn concat_str(head s1: str, tail s2: str): str {
     s1 ++ s2
 }
@@ -12,8 +14,9 @@ fn length<a>(_ xs: [a]): int {
     return i
 }
 
-fn lengthi<a>(xs: [a]): int {
+fn length<a>(xs: [a]): int {
     return xs.reduce(0, fn (acc: int, ?: a) => acc + 1)
+    // ? means the value is ignored
 }
 
 fn show(a: int = 2, b: int = 1, c: int = 0)

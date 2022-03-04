@@ -1,1 +1,2 @@
-2 * (3 - 4) >= 4 || 5 != 7 && 2 << 4 < 50
+fn show(a: real = 2.0, b: int = 1, c: real = 0.0)
+    => a.floor().str() + " " + b.str() + " " + c.floor().str()

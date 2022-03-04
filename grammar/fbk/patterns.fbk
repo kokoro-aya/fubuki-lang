@@ -1,12 +1,14 @@
 // patterns
 
+// Tested OK
+
 foo
 fo_oz
 _bar: int
 
-(12, b: int)
-("foo", 2, "bar", 4)
-(a: real, b[4])
+(c12, b: int)
+("foo", _2, "bar", _4)
+(a: real, b[4], _)
 (_, _)
 
 a[b]

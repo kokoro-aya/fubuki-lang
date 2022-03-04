@@ -1,6 +1,8 @@
 // function types
 
-(int) -> void
+// Tested OK
+
+(int) -> unit
 () -> (real, int)
 (bool, real) -> [real]
 (a, (a) -> b) -> b
@@ -11,7 +13,7 @@
 [int]
 [a]
 [(a, b)]
-[(int) -> void]
+[(int) -> unit]
 
 // tuple types
 

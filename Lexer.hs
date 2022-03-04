@@ -169,6 +169,7 @@ matchCharacterizedToken s r p= Token (Ident name) r p: tokenizeClause clause r (
           tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
               where (ax, bx) = span isIdentChar xs
           tokenizeClause (x:_) _ _ = error $ "unexpected character: " ++ show x ++ " in generic clause at row " ++ show r ++ ", column " ++ show p ++ "."
+          -- Add additional parameters and change return type to reflect the modifications about generic clauses
 
 matchSymbolToken :: String -> TokenType
 matchSymbolToken "=>" = LAM_ARR

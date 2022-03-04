@@ -1,12 +1,12 @@
 grammar fbk;
 
-top_level: expr EOF;
+top_level: type EOF;
 
 fragment DIGIT_HEAD: [1-9];
 fragment DIGIT: [0-9];
 INT: DIGIT_HEAD DIGIT* | DIGIT;
 
-fragment IDENT_HEAD: [A-Z] | [a-z] | '_';
+fragment IDENT_HEAD: [A-Z] | [a-z] | '_' | '$';
 fragment IDENT_CHAR: [0-9] | IDENT_HEAD;
 fragment CHAR: ~['"\\EOF\n];
 fragment ESC: '\\' | '\\\\';
@@ -27,32 +27,32 @@ literal: nat | real | bool | str | chr;
 
 // Expressions
 
-expr: expr11 (switch_expression | );
-expr11 : expr10 (chained_method_invocation | );
+expr: expr10 (switch_expression | );
 expr10 : expr9 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr9 | lambda_expression;
 expr9 : expr8 | expr8 '||' expr9;
 expr8 : expr7 | expr7 '&&' expr8;
-expr7 : expr6 | expr6 '^^' expr7;
+expr7 : expr6 | expr6 '^^' expr7; // xor
 expr6 : expr5 | expr5 ('==' | '!=') expr6;
 expr5 : expr4 | expr4 ('<' | '<=' | '>' | '>=') expr5;
 expr4 : expr3 | expr3 ('...' | '..<' | '>>.' | '>..') expr4;
 expr3 : expr2 | expr2 '++' expr3;
 expr2 : expr1 | expr1 ('<<' | '>>') expr2;
-expr1 : <assoc=right> expr0 | expr0 '^' expr1;
+expr1 : <assoc=right> expr0 | expr0 '^' expr1; // exponen
 expr0: term | term ('+' | '-') expr0;
 term: subterm | subterm ('*' | '/' | '%') term;
-subterm: ('!' | '+' | '-') factor;
-factor: '(' expr ')' | primary;
+subterm: factor | ('!' | '+' | '-') factor;
+factor: primary (chained_method_invocation | );
+primary: '(' expr (',' expr)* ','? ')' | subprimary;
 
 // Primaries
 
-primary: literal_primary
-       | variable_primary
+subprimary: literal_primary
        | function_call_primary
+       | variable_primary
        | function_declaration;
 
 literal_primary: literal | array_literal;
-array_literal: '[' expr (',' expr) ']';
+array_literal: '[' expr (',' expr)* ','? ']';
 
 variable_primary: pattern type_annotation?;
 
@@ -61,7 +61,7 @@ function_call_argument_clause: '(' function_call_argument_list? ')';
 function_call_argument_list: function_call_argument (',' function_call_argument)*;
 function_call_argument: (IDENTIFIER ':')? expr;
 
-chained_method_invocation: function_call_primary+;
+chained_method_invocation: ('.' function_call_primary)+;
 
 // Types
 
@@ -75,8 +75,8 @@ type_annotation: ':' type;
 
 // Patterns
 
-pattern: identifier_pattern type_annotation?
-       | wildcard_pattern
+pattern: wildcard_pattern
+       | identifier_pattern type_annotation?
        | tuple_pattern
        | subscript_pattern;
 
@@ -84,8 +84,8 @@ identifier_pattern: IDENTIFIER;
 wildcard_pattern: '_';
 tuple_pattern: '(' tuple_pattern_elements ')';
 tuple_pattern_elements: tuple_pattern_element (',' tuple_pattern_element)*;
-tuple_pattern_element: IDENTIFIER type_annotation? | '_';
-subscript_pattern: IDENTIFIER '[' subscript ']';
+tuple_pattern_element: (wildcard_pattern | subscript_pattern | identifier_pattern) type_annotation? | '_';
+subscript_pattern: IDENTIFIER ('[' subscript ']')+;
 subscript: IDENTIFIER | literal | reverse_subscript | slice_subscript | expr;
 reverse_subscript: '^' expr;
 slice_subscript: slice_subscript_part '..' slice_subscript_part
@@ -94,7 +94,7 @@ slice_subscript: slice_subscript_part '..' slice_subscript_part
 slice_subscript_part: reverse_subscript | expr;
 
 switch_expression: 'switch' '{' switch_expr_arm+ '}';
-switch_expr_arm: literal_arm | default_arm;
+switch_expr_arm: literal_arm ','? | default_arm;
 default_arm: '_' '=>' expr;
 literal_arm: literal '=>' expr;
 

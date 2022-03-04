@@ -1,5 +1,7 @@
 // Statements
 
+// Tested OK
+
 val a = fn (a: int) => a + 1
 
 1 + 2 * 3 - 4 / 5
