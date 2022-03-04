@@ -66,6 +66,10 @@ isOperator tok = case tok of
     (Oper _) -> True
     _ -> False
 
+isCustomOperator :: TokenType -> Bool
+isCustomOperator (Oper _) = True
+isCustomOperator _ = False
+
 isComma :: TokenType -> Bool
 isComma COMMA = True
 isComma _ = False

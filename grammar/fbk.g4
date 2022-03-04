@@ -34,7 +34,7 @@ expr8 : expr7 | expr7 '&&' expr8;
 expr7 : expr6 | expr6 '^^' expr7; // xor
 expr6 : expr5 | expr5 ('==' | '!=') expr6;
 expr5 : expr4 | expr4 ('<' | '<=' | '>' | '>=') expr5;
-expr4 : expr3 | expr3 ('...' | '..<' | '>>.' | '>..') expr4;
+expr4 : expr3 | expr3 ('...' | '..<' | '>>.' | '>..' | '@') expr4;
 expr3 : expr2 | expr2 '++' expr3;
 expr2 : expr1 | expr1 ('<<' | '>>') expr2;
 expr1 : <assoc=right> expr0 | expr0 '^' expr1; // exponen
