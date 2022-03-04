@@ -29,8 +29,11 @@ isOctChar c = c `elem` "01234567_"
 isHexChar :: Char -> Bool
 isHexChar c = c `elem` "0123456789abcdefABCDEF_"
 
+isSymbolHead :: Char -> Bool
+isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^@"
+
 isSymbolChar :: Char -> Bool
-isSymbolChar c = c `elem` "$=-&+-*/%<>~!|^.@:?"
+isSymbolChar c = c `elem` "$=-&+-*%<>~!|^.@:?" -- remove / to prevent clash with comments
 
 matchUntil :: (String -> Bool) -> String -> (String, String)
 matchUntil _ [] = ([], [])
@@ -208,7 +211,7 @@ matchSymbolToken "++" = APPEND
 matchSymbolToken "." = DOT
 matchSymbolToken "::" = DOUBLE_COLUMN
 matchSymbolToken ":" = COLUMN
-matchSymbolToken x = error $ "customized symbol is not supported: " ++ show x
+matchSymbolToken x = Oper x
 
 lexing :: String -> [Token]
 lexing x = tripleFst . tokenize x 0 [0] lineBegin $ posBegin

@@ -12,6 +12,7 @@ instance Show Token where
 data TokenType = Numeric String
             | Str String
             | Chr Char
+            | Oper String
             | LINTERP | RINTERP
             -- | UChr String -- won't achieve unicode in simple implementation
             | Ident String
@@ -41,3 +42,39 @@ data TokenType = Numeric String
             | REPEAT | SWITCH | CASE | DEFAULT      -- repeat, switch, case, default
             | BREAK | CONTINUE | FALLTHRU           -- when, break, continue, fallthrough (:||)
             deriving (Eq, Show)
+
+isLiteral :: TokenType -> Bool
+isLiteral tok = case tok of
+    Str _ -> True ; Chr _ -> True ; Numeric _ -> True
+    TRU -> True ; FLS -> True
+    _ -> False
+
+isReference :: TokenType -> Bool
+isReference (Ident _) = True
+isReference _ = False
+
+isOperator :: TokenType -> Bool
+isOperator tok = case tok of
+    ADD -> True ; SUB -> True ; MUL -> True ; DIV -> True ; MOD -> True
+    EQU -> True ; NEQU -> True ; GANGL -> True ; LANGL -> True ; GEQ -> True ; LEQ -> True
+    AND -> True ; OR -> True ; XOR -> True ; NOT -> True ; CARET -> True
+    ADDEQ -> True ; SUBEQ -> True ; MULEQ -> True ; DIVEQ -> True ; MODEQ -> True
+    LSHIFT -> True ; RSHIFT -> True
+    THROUGH -> True ; UNTIL -> True ; DOWNTO -> True ; DOWNTHROUGH -> True
+    STEP -> True
+    APPEND -> True
+    (Oper _) -> True
+    _ -> False
+
+isComma :: TokenType -> Bool
+isComma COMMA = True
+isComma _ = False
+
+literalValue :: TokenType -> String
+literalValue (Str s) = s
+literalValue (Numeric s) = s
+literalValue _ = error "internal:: literalValue: not a literal"
+
+charLiteralValue :: TokenType -> Char
+charLiteralValue (Chr c) = c
+charLiteralValue _ = error "internal:: charLiteralValue: not a char literal"

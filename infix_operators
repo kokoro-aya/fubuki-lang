@@ -1,10 +1,11 @@
 Infix operators' precedences are determined by their first character.
 
 The first char : description
-|              : infix 0, left
+| $            : infix 0, left
 &              : infix 1, left
 =              : infix 2, left
 < >            : infix 3, left
 ^ @            : infix 4, right (except for ^^)
 + -            : infix 5, left (except for ++)
 * / %          : infix 6, left
+! ~            : prefix 7
