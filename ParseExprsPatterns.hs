@@ -1,13 +1,6 @@
 module ParseExprsPatterns where
 
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE GADTs #-}
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
 import Parser (satisfy, sepBy1)
 import Fragments
