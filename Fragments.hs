@@ -1,7 +1,7 @@
-module ParseLiterals where
+module Fragments where
 
 import Parser (satisfy)
-import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU), literalValue, charLiteralValue)
+import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident), literalValue, charLiteralValue)
 import ParseSymbols (dot)
 import Utils (readToInt, readToDouble)
 import Control.Applicative ((<|>))
@@ -42,3 +42,14 @@ boolLiteral = do
                     pure False
 
 strLiteral = literalValue . tokenType <$> str
+
+isIdentifier (Ident _) = True
+isIdentifier _ = False
+
+identifier = satisfy "variable token expected" (isIdentifier . tokenType)
+
+isWildcard ULINE = True
+isWildcard _ = False
+
+wildcard = satisfy "wildcard token \"_\" expected" (isWildcard . tokenType)
+

@@ -11,7 +11,7 @@ lparen = satisfy "expected token \"(\"" ((== LPAREN) . tokenType)
 
 rparen = satisfy "expected token \")\"" ((== RPAREN) . tokenType)
 
-notSymbol = satisfy "expected token \"not\"" ((== NOT) . tokenType)
+notSymbol = satisfy "expected token \"!\"" ((== NOT) . tokenType)
 
 addSymbol = satisfy "expected token \"+\"" ((== ADD) . tokenType)
 
@@ -22,6 +22,8 @@ mulSymbol = satisfy "expected token \"*\"" ((== MUL) . tokenType)
 divSymbol = satisfy "expected token \"/\"" ((== DIV) . tokenType)
 
 modSymbol = satisfy "expected token \"%\"" ((== MOD) . tokenType)
+
+caretSymbol = satisfy "expected token \"^\"" ((== CARET) . tokenType)
 
 lshiftSymbol = satisfy "expected token \"<<\"" ((== LSHIFT) . tokenType)
 

@@ -51,6 +51,7 @@ isLiteral tok = case tok of
 
 isReference :: TokenType -> Bool
 isReference (Ident _) = True
+isReference ULINE = True
 isReference _ = False
 
 isOperator :: TokenType -> Bool
@@ -82,3 +83,7 @@ literalValue _ = error "internal:: literalValue: not a literal"
 charLiteralValue :: TokenType -> Char
 charLiteralValue (Chr c) = c
 charLiteralValue _ = error "internal:: charLiteralValue: not a char literal"
+
+identifierName :: TokenType -> String
+identifierName (Ident s) = s
+identifierName _ = error "internal:: identifierName: not an identifier"

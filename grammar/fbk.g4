@@ -27,19 +27,19 @@ literal: nat | real | bool | str | chr;
 
 // Expressions
 
-expr: expr10 (switch_expression | );
-expr10 : expr9 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr9 | lambda_expression;
-expr9 : expr8 | expr8 '||' expr9;
-expr8 : expr7 | expr7 '&&' expr8;
-expr7 : expr6 | expr6 '^^' expr7; // xor
-expr6 : expr5 | expr5 ('==' | '!=') expr6;
-expr5 : expr4 | expr4 ('<' | '<=' | '>' | '>=') expr5;
-expr4 : expr3 | expr3 ('...' | '..<' | '>>.' | '>..' | '@') expr4;
-expr3 : expr2 | expr2 '++' expr3;
-expr2 : expr1 | expr1 ('<<' | '>>') expr2;
-expr1 : <assoc=right> expr0 | expr0 '^' expr1; // exponen
-expr0: term | term ('+' | '-') expr0;
-term: subterm | subterm ('*' | '/' | '%') term;
+expr: expr9 (switch_expression | );
+expr9 : expr8 | pattern ('+=' | '-=' | '*=' | '/=' | '%=' | '=') expr8 | lambda_expression; // level12
+expr8 : expr7 | expr7 '||' expr8; // level11
+expr7 : expr6 | expr6 '&&' expr7; // level10
+expr6 : expr5 | expr5 '^^' expr6; // xor, level9
+expr5 : expr4 | expr4 ('==' | '!=') expr5; // level8
+expr4 : expr3 | expr3 ('<' | '<=' | '>' | '>=') expr4; // level7
+expr3 : expr2 | expr2 ('...' | '..<' | '>>.' | '>..' | '@') expr3; // level6
+expr2 : expr1 | expr1 '++' expr2; // level5
+expr1 : expr0 | expr0 ('<<' | '>>') expr1; // level4
+expr0: term | term ('+' | '-') expr0; // level3
+term: expterm | expterm ('*' | '/' | '%') term; // level 2
+expterm : subterm | subterm '^' expterm; // exponen, level 1
 subterm: factor | ('!' | '+' | '-') factor;
 factor: primary (chained_method_invocation | );
 primary: '(' expr (',' expr)* ','? ')' | subprimary;
