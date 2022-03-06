@@ -5,3 +5,6 @@ readToInt = read
 
 readToDouble :: String -> Double
 readToDouble = read
+
+putLine :: IO ()
+putLine = putStrLn ""

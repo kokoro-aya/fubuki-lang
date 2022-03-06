@@ -1,2 +1,6 @@
 .antlr
 .DS_Store
+*.hi
+*.o
+Test
+Main

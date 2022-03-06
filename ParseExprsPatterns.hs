@@ -8,21 +8,26 @@ import Fragments
 import Control.Applicative ((<|>))
 import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol)
 
-data Op = Op { opType :: Token, opPrec :: Int }
+data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq, Show)
 
 data Expr = UnaryExpr Op Expr
           | BinaryExpr Op Expr Expr
           | PrimaryExpr Expr
           | Parenthesis Expr
           | TupleExpr [Expr]
-          | AssignedExpr Op Pattern Expr
+          | AssignedExpr Op Pattern Expr deriving (Eq, Show)
 
 data Primary = IntPrimary Int
              | RealPrimary Double
              | CharPrimary Char
              | StrPrimary String
              | BoolPrimary Bool
-             | VariablePrimary Pattern
+             | VariablePrimary Pattern deriving (Eq, Show)
+
+data Pattern = WildcardPattern
+             | IdentifierPattern String
+             | TuplePattern [Pattern]
+             | SubscriptPattern Pattern [Expr] deriving (Eq, Show)
 
 literalToken = satisfy "literal token expected" (isLiteral . tokenType)
 referenceToken = satisfy "reference token expected" (isReference . tokenType)
@@ -37,7 +42,7 @@ operatorToken = satisfy "literal token expected" (isOperator . tokenType)
 expr = exprLevel9
 
 exprLevel9 = do
-              p <- pattern
+              p <- pattern_
               op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assignSymbol
               AssignedExpr (Op op 12) p <$> exprLevel8
               <|> exprLevel8
@@ -131,7 +136,7 @@ mkParenthesis xs = TupleExpr xs
 
 subPrimary = literalPrimary <|> variablePrimary
 
-variablePrimary = VariablePrimary <$> pattern
+variablePrimary = VariablePrimary <$> pattern_
 
 literalPrimary = IntPrimary <$> intLiteral
                  <|>
@@ -148,12 +153,7 @@ literalPrimary = IntPrimary <$> intLiteral
 --  Parser for patterns   --
 ----------------------------
 
-data Pattern = WildcardPattern
-             | IdentifierPattern String
-             | TuplePattern [Pattern]
-             | SubscriptPattern Pattern [Expr]
-
-pattern = wildcardPattern <|> identifierPattern
+pattern_ = wildcardPattern <|> identifierPattern
 
 wildcardPattern = wildcard >> pure WildcardPattern
 
