@@ -1,9 +1,9 @@
 import Tests.TestExpressions (testExpressionCases)
-import ParseTopLevel (parseTopLevel)
+import ParseTopLevel (testParseTopLevel)
 import Utils (putLine)
 
 testExpressions = do
-    putStrLn "-- Test Expressions --"
+    putStrLn "-- Test Expressions Begin --"
     putLine
 
     mapM_ (\(name, cases) -> do putStrLn "--------------------------------------------------------"
@@ -14,7 +14,7 @@ testExpressions = do
                                                               putStrLn "Code: "
                                                               putStrLn code
                                                               putStrLn "Generated ADT: "
-                                                              print . parseTopLevel $ code
+                                                              print . testParseTopLevel $ code
                                                               putLine
                                                               putLine
                                                               pure ()) cases
@@ -22,6 +22,7 @@ testExpressions = do
                                 putLine
                                 pure ()
                                 ) . filter (\(_, xs) -> not $ null xs) $ testExpressionCases
+    putStrLn "-- Test Expressions End --"
 
 main = do
         testExpressions

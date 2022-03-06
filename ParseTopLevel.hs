@@ -5,7 +5,10 @@ import Parser (parse)
 
 type TopLevel = Expr
 
-topLevel = expr 
+topLevel = expr
 
-parseTopLevel :: String -> Expr 
+parseTopLevel :: String -> Expr
 parseTopLevel = either (error . show) fst . parse topLevel . lexing
+
+testParseTopLevel :: String -> String
+testParseTopLevel = either (\x -> "Syntax error: " ++ show x) (show . fst) . parse topLevel . lexing

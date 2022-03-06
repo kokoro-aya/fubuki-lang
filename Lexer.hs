@@ -30,7 +30,7 @@ isHexChar :: Char -> Bool
 isHexChar c = c `elem` "0123456789abcdefABCDEF_"
 
 isSymbolHead :: Char -> Bool
-isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^@"
+isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^.@"
 
 isSymbolChar :: Char -> Bool
 isSymbolChar c = c `elem` "$=-&+-*%<>~!|^.@:?" -- remove / to prevent clash with comments
@@ -135,7 +135,7 @@ tokenize (x : xs) n m r p | isIdentHead x = (matchCharacterizedToken (x : t) r p
     where
         (t, xs') = span (\x -> isIdentChar x || x `elem` "<>") xs
 
-tokenize (x : xs) n m r p | isSymbolChar x = (Token (matchSymbolToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
+tokenize (x : xs) n m r p | isSymbolHead x = (Token (matchSymbolToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
         (t, xs') = span isSymbolChar xs
 

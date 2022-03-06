@@ -8,11 +8,14 @@ import Fragments
 import Control.Applicative ((<|>))
 import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol)
 
-data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq, Show)
+data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq)
+
+instance Show Op where
+    show (Op t p) = show (tokenType t) ++ "(" ++ show p ++ ")"
 
 data Expr = UnaryExpr Op Expr
           | BinaryExpr Op Expr Expr
-          | PrimaryExpr Expr
+          | PrimaryExpr Primary
           | Parenthesis Expr
           | TupleExpr [Expr]
           | AssignedExpr Op Pattern Expr deriving (Eq, Show)
@@ -125,7 +128,8 @@ primary = do
             exprs <- sepBy1 expr comma
             rparen
             pure $ mkParenthesis exprs
-            <|> PrimaryExpr <$> primary
+            <|> do  s <- subPrimary
+                    pure (PrimaryExpr s)
 
 mkParenthesis [x] = Parenthesis x
 mkParenthesis xs = TupleExpr xs
@@ -138,9 +142,9 @@ subPrimary = literalPrimary <|> variablePrimary
 
 variablePrimary = VariablePrimary <$> pattern_
 
-literalPrimary = IntPrimary <$> intLiteral
+literalPrimary = RealPrimary <$> realLiteral
                  <|>
-                     RealPrimary <$> realLiteral
+                     IntPrimary <$> intLiteral
                      <|>
                          CharPrimary <$> charLiteral
                          <|>

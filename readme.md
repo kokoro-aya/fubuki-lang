@@ -9,5 +9,6 @@ The language is designed to be simple while being exposed to several interesting
 
 Current status:
 
-- Lexer with enhanced features.
-- Parser to generate AST for simple expressions.
+- [x] Lexer with enhanced features.
+- [x] Parser to generate AST for simple expressions.
+- [ ] Doing: Custom operators
