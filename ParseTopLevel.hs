@@ -1,5 +1,7 @@
 module ParseTopLevel where
-import ParseExprsPatterns (Expr, expr)
+
+import ADT (Expr)
+import FubukiParser (expr)
 import Lexer (lexing)
 import Parser (parse)
 

@@ -1,36 +1,12 @@
-module ParseExprsPatterns where
+module FubukiParser where
 
-{-# LANGUAGE GADTs #-}
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
 import Parser (satisfy, sepBy1)
+import ADT
 import Fragments
     ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, wildcard, identifier )
 import Control.Applicative ((<|>))
-import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol)
-
-data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq)
-
-instance Show Op where
-    show (Op t p) = show (tokenType t) ++ "(" ++ show p ++ ")"
-
-data Expr = UnaryExpr Op Expr
-          | BinaryExpr Op Expr Expr
-          | PrimaryExpr Primary
-          | Parenthesis Expr
-          | TupleExpr [Expr]
-          | AssignedExpr Op Pattern Expr deriving (Eq, Show)
-
-data Primary = IntPrimary Int
-             | RealPrimary Double
-             | CharPrimary Char
-             | StrPrimary String
-             | BoolPrimary Bool
-             | VariablePrimary Pattern deriving (Eq, Show)
-
-data Pattern = WildcardPattern
-             | IdentifierPattern String
-             | TuplePattern [Pattern]
-             | SubscriptPattern Pattern [Expr] deriving (Eq, Show)
+import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 
 literalToken = satisfy "literal token expected" (isLiteral . tokenType)
 referenceToken = satisfy "reference token expected" (isReference . tokenType)
@@ -52,31 +28,31 @@ exprLevel9 = do
 
 exprLevel8 = do
               e1 <- exprLevel7
-              (do op <- orSymbol
+              (do op <- orSymbol <|> infix0
                   BinaryExpr (Op op 11) e1 <$> exprLevel8)
                   <|> pure e1
 
 exprLevel7 = do
               e1 <- exprLevel6
-              (do op <- andSymbol
+              (do op <- andSymbol <|> infix1
                   BinaryExpr (Op op 10) e1 <$> exprLevel7)
                   <|> pure e1
 
 exprLevel6 = do
               e1 <- exprLevel5
-              (do op <- xorSymbol
+              (do op <- xorSymbol <|> infix2
                   BinaryExpr (Op op 9) e1 <$> exprLevel6)
                   <|> pure e1
 
 exprLevel5 = do
               e1 <- exprLevel4
-              (do op <- eqSymbol <|> neqSymbol
+              (do op <- eqSymbol <|> neqSymbol <|> infix3
                   BinaryExpr (Op op 8) e1 <$> exprLevel5)
                   <|> pure e1
 
 exprLevel4 = do
               e1 <- exprLevel3
-              (do op <- lesserthanSymbol <|> greaterthanSymbol <|> leqSymbol <|> geqSymbol
+              (do op <- lesserthanSymbol <|> greaterthanSymbol <|> leqSymbol <|> geqSymbol <|> infix4
                   BinaryExpr (Op op 7) e1 <$> exprLevel4)
                   <|> pure e1
 
@@ -100,13 +76,13 @@ exprLevel1 = do
 
 exprLevel0 = do
               t <- term
-              (do op <- addSymbol <|> subSymbol
+              (do op <- addSymbol <|> subSymbol <|> infix5
                   BinaryExpr (Op op 3) t <$> exprLevel0)
                   <|> pure t
 
 term = do
         s <- expterm
-        (do op <- mulSymbol <|> divSymbol <|> modSymbol
+        (do op <- mulSymbol <|> divSymbol <|> modSymbol <|> infix6
             BinaryExpr (Op op 2) s <$> term)
             <|> pure s
 
@@ -117,7 +93,7 @@ expterm = do
                 <|> pure s
 
 subterm = do
-            op <- notSymbol <|> addSymbol <|> subSymbol
+            op <- notSymbol <|> addSymbol <|> subSymbol <|> prefix7
             UnaryExpr (Op op 0) <$> factor
             <|> factor
 
@@ -128,8 +104,7 @@ primary = do
             exprs <- sepBy1 expr comma
             rparen
             pure $ mkParenthesis exprs
-            <|> do  s <- subPrimary
-                    pure (PrimaryExpr s)
+            <|> do PrimaryExpr <$> subPrimary
 
 mkParenthesis [x] = Parenthesis x
 mkParenthesis xs = TupleExpr xs

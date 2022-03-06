@@ -1,5 +1,5 @@
 module ParseSymbols where
-import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GANGL, LANGL, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), isCustomOperator)
+import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GANGL, LANGL, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), isCustomOperator, matchInfix)
 import Parser (satisfy)
 
 
@@ -72,3 +72,19 @@ modeqSymbol = satisfy "expected token \"%=\"" ((== MODEQ) . tokenType)
 assignSymbol = satisfy "expected token \"=\"" ((== ASSIGN) . tokenType)
 
 customSymbol = satisfy "expected token custom operator" (isCustomOperator . tokenType)
+
+infix0 = satisfy "expected token infix operator of level 0" (matchInfix (`elem` "|$") . tokenType)
+
+infix1 = satisfy "expected token infix operator of level 1" (matchInfix (== '&') . tokenType)
+
+infix2 = satisfy "expected token infix operator of level 2" (matchInfix (`elem` "^@") . tokenType)
+
+infix3 = satisfy "expected token infix operator of level 3" (matchInfix (== '=') . tokenType)
+
+infix4 = satisfy "expected token infix operator of level 4" (matchInfix (`elem` "<>") . tokenType)
+
+infix5 = satisfy "expected token infix operator of level 5" (matchInfix (`elem` "+-") . tokenType)
+
+infix6 = satisfy "expected token infix operator of level 6" (matchInfix (`elem` "*/%") . tokenType)
+
+prefix7 = satisfy "expected token prefix operator of level 7" (matchInfix (`elem` "!~") . tokenType)

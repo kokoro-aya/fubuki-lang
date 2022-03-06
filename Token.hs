@@ -71,6 +71,10 @@ isCustomOperator :: TokenType -> Bool
 isCustomOperator (Oper _) = True
 isCustomOperator _ = False
 
+matchInfix :: (Char -> Bool) -> TokenType -> Bool
+matchInfix p (Oper (c:_)) = p c
+matchInfix _ _ = False
+
 isComma :: TokenType -> Bool
 isComma COMMA = True
 isComma _ = False
