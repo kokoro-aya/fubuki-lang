@@ -1,7 +1,7 @@
 module Tests.TestExpressions (testExpressionCases) where
 
 simpleExpressions = zip [1..] [
-    "1 + 2",
+    "1 + 2 - 3 + 4 - 5",
     "1 * (2 + 3)",
     "1 + 2 ^ 3 ^ 4 % 5",
     "1 << 2 + 3 * 4 >> 2 + 1",

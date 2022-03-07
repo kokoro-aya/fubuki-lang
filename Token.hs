@@ -6,9 +6,6 @@ data Token = Token {
     pos :: Int
 } deriving (Eq)
 
-instance Show Token where
-    show (Token t r c) = show t ++ " at: R:" ++ show r ++ ",C:" ++ show c ++ ".\n"
-
 data TokenType = Numeric String
             | Str String
             | Chr Char
@@ -41,7 +38,7 @@ data TokenType = Numeric String
             | VAL | VAR | FN                        -- val, var, fn
             | REPEAT | SWITCH | CASE | DEFAULT      -- repeat, switch, case, default
             | BREAK | CONTINUE | FALLTHRU           -- when, break, continue, fallthrough (:||)
-            deriving (Eq, Show)
+            deriving (Eq)
 
 isLiteral :: TokenType -> Bool
 isLiteral tok = case tok of
