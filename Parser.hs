@@ -2,6 +2,7 @@ module Parser where
 
 import Token ( Token (line, pos) )
 import Control.Applicative ( Alternative(empty, (<|>)) )
+import Data.Char (isDigit)
 
 newtype Parser a = P ([Token] -> Either String (a, [Token]))
 
@@ -52,13 +53,19 @@ between p1 p2 p3 = do _ <- p1
                       _ <- p2
                       pure x
 
+--  a | a a | a a a ...
+
 some :: Parser a -> Parser [a]
 some p = do x <- p
             xs <- many p
             pure (x:xs)
 
+--  | a | a a | a a a ...
+
 many :: Parser a -> Parser [a]
 many p = some p <|> pure []
+
+--  | a b a | a b a b a
 
 sepBy :: Parser a -> Parser b -> Parser [a]
 sepBy p sep = do x <- p
@@ -66,8 +73,32 @@ sepBy p sep = do x <- p
                                 p)
                  pure (x:xs)
 
+--  a | a b a
+
 sepBy1 :: Parser a -> Parser b -> Parser [a]
 sepBy1 p sep = do x <- p
                   xs <- many (do _ <- sep
                                  p)
                   pure (x:xs) <|> pure [x]
+
+sepEndBy :: Parser a -> Parser b -> Parser [a]
+sepEndBy p sep = do xs <- sepBy p sep
+                    (do _ <- sep
+                        pure xs) <|> pure xs
+
+sepEndBy1 :: Parser a -> Parser b -> Parser [a]
+sepEndBy1 p sep = do xs <- sepBy1 p sep
+                     (do _ <- sep
+                         pure xs) <|> pure xs
+
+-- To be used in left associative rules
+
+leftAssociate :: Parser a -> Parser [(b, a)] -> (b -> a -> a -> a) -> Parser a
+leftAssociate beg p2 tf = do x <- beg
+                             xs <- p2
+                             if null xs then
+                                pure x
+                             else
+                                let (hb, ha) = head xs in
+                                let rev = reverse $ tail xs in
+                                    pure $ foldl (\acc (bx, ax) -> tf bx acc ax) (tf hb x ha) rev

@@ -8,17 +8,17 @@ Converted using ebnf2bnf.
 
 expr -> expr10 (switch_expression | ).
 expr10 -> expr9 | pattern (ADDEQ | SUBEQ | MULEQ | DIVEQ | MODEQ | ASSIGN) expr9 | lambda_expr.
-expr9 -> expr8 | expr8 OR expr9.
-expr8 -> expr7 | expr7 AND expr8.
-expr7 -> expr6 | expr6 XOR expr7.
-expr6 -> expr5 | expr5 (EQ | NEQ) expr6.
-expr5 -> expr4 | expr4 (LT | LTEQ | GT | GTEQ) expr5.
-expr4 -> expr3 | expr3 (UNTIL | THROUGH | DOWNTILL | DOWNTO) expr4.
-expr3 -> expr2 | expr2 APPEND expr3.
-expr2 -> expr1 | expr1 (LEFTSHIFT | RIGHTSHIFT) expr2.
+expr9 -> expr8 | expr9 OR expr8.
+expr8 -> expr7 | expr8 AND expr7.
+expr7 -> expr6 | expr7 XOR expr6.
+expr6 -> expr5 | expr6 (EQ | NEQ) expr5.
+expr5 -> expr4 | expr5 (LT | LTEQ | GT | GTEQ) expr4.
+expr4 -> expr3 | expr4 (UNTIL | THROUGH | DOWNTILL | DOWNTO) expr3.
+expr3 -> expr2 | expr3 APPEND expr2.
+expr2 -> expr1 | expr2 (LEFTSHIFT | RIGHTSHIFT) expr1.
 expr1 -> expr0 | expr0 EXPONENT expr1.
-expr0 -> term | term (ADD | SUB) expr0.
-term -> subterm | subterm (MUL | DIV | MOD) term.
+expr0 -> term | expr0 (ADD | SUB) term.
+term -> subterm | term (MUL | DIV | MOD) subterm.
 subterm -> factor | (NOT | ADD | SUB) factor.
 factor -> primary (chained_method_invocation | ).
 primary -> LPAREN expr (COMMA expr)* COMMA? RPAREN | subprimary.
@@ -30,34 +30,34 @@ subprimary -> literal_primary.
 
 Expr -> Expr10 Expr#2_Group.
 Expr#2_Group -> Switch_expression | .
-Expr0 -> Term | Term Expr0@2#2_Group Expr0.
-Expr0@2#2_Group -> add | sub.
-Expr1 -> Expr0 | Expr0 exponent Expr1.
 Expr10 -> Expr9 | Pattern Expr10@2#2_Group Expr9 | Lambda_expr.
 Expr10@2#2_Group -> addeq | subeq | muleq | diveq | modeq | assign.
-Expr2 -> Expr1 | Expr1 Expr2@2#2_Group Expr2.
-Expr2@2#2_Group -> leftshift | rightshift.
-Expr3 -> Expr2 | Expr2 append Expr3.
-Expr4 -> Expr3 | Expr3 Expr4@2#2_Group Expr4.
-Expr4@2#2_Group -> until | through | downtill | downto.
-Expr5 -> Expr4 | Expr4 Expr5@2#2_Group Expr5.
-Expr5@2#2_Group -> lt | lteq | gt | gteq.
-Expr6 -> Expr5 | Expr5 Expr6@2#2_Group Expr6.
+Expr9 -> Expr8 | Expr9 or Expr8.
+Expr8 -> Expr7 | Expr8 and Expr7.
+Expr7 -> Expr6 | Expr7 xor Expr6.
+Expr6 -> Expr5 | Expr6 Expr6@2#2_Group Expr5.
 Expr6@2#2_Group -> eq | neq.
-Expr7 -> Expr6 | Expr6 xor Expr7.
-Expr8 -> Expr7 | Expr7 and Expr8.
-Expr9 -> Expr8 | Expr8 or Expr9.
+Expr5 -> Expr4 | Expr5 Expr5@2#2_Group Expr4.
+Expr5@2#2_Group -> lt | lteq | gt | gteq.
+Expr4 -> Expr3 | Expr4 Expr4@2#2_Group Expr3.
+Expr4@2#2_Group -> until | through | downtill | downto.
+Expr3 -> Expr2 | Expr3 append Expr2.
+Expr2 -> Expr1 | Expr2 Expr2@2#2_Group Expr1.
+Expr2@2#2_Group -> leftshift | rightshift.
+Expr1 -> Expr0 | Expr0 exponent Expr1.
+Expr0 -> Term | Expr0 Expr0@2#2_Group Term.
+Expr0@2#2_Group -> add | sub.
+Term -> Subterm | Term Term@2#2_Group Subterm.
+Term@2#2_Group -> mul | div | mod.
+Subterm -> Factor | Subterm@2#1_Group Factor.
+Subterm@2#1_Group -> not | add | sub.
 Factor -> Primary Factor#2_Group.
 Factor#2_Group -> Chained_method_invocation | .
 Primary -> lparen Expr Primary@1#3_Star primary@1#4_Option rparen | Subprimary.
-Primary@1#3_Group -> comma Expr.
-Primary@1#3_Star ->  | Primary@1#3_Group Primary@1#3_Star.
 Primary@1#4_Option ->  | comma.
+Primary@1#3_Star ->  | Primary@1#3_Group Primary@1#3_Star.
+Primary@1#3_Group -> comma Expr.
 Subprimary -> Literal_primary.
-Subterm -> Factor | Subterm@2#1_Group Factor.
-Subterm@2#1_Group -> not | add | sub.
-Term -> Subterm | Subterm Term@2#2_Group Term.
-Term@2#2_Group -> mul | div | mod.
 
 ------------------------
    LL(1) Factorization
@@ -65,48 +65,42 @@ Term@2#2_Group -> mul | div | mod.
 
 Expr -> Expr10 Expr#2_Group .
 Expr#2_Group -> Switch_expression | .
-
-Expr10   -> Expr9 | Pattern Expr10@2#2_Group Expr9 | Lambda_expr .
+Expr10 -> Expr9 | Pattern Expr10@2#2_Group Expr9 | Lambda_expr .
 Expr10@2#2_Group -> addeq | subeq | muleq | diveq | modeq | assign .
-Expr9    -> Expr8 FExpr8 .
-FExpr8   -> | or Expr9 .
-Expr8    -> Expr7 FExpr7 .
-FExpr7   -> | and Expr8 .
-Expr7    -> Expr6 FExpr6 .
-FExpr6   -> | xor Expr7 .
-Expr6    -> Expr5 FExpr5 .
+Expr9 -> Expr8 Expr91 .
+Expr91 -> or Expr8 Expr91 | .
+Expr8 -> Expr7 Expr81 .
+Expr81 -> and Expr7 Expr81 | .
+Expr7 -> Expr6 Expr71 .
+Expr71 -> xor Expr6 Expr71 | .
+Expr6 -> Expr5 Expr61 .
+Expr61 -> Expr6@2#2_Group Expr5 Expr61 | .
 Expr6@2#2_Group -> eq | neq .
-FExpr5   -> | Expr6@2#2_Group Expr6 .
-Expr5    -> Expr4 FExpr4 .
+Expr5 -> Expr4 Expr51 .
+Expr51 -> Expr5@2#2_Group Expr4 Expr51 | .
 Expr5@2#2_Group -> lt | lteq | gt | gteq .
-FExpr4   -> | Expr5@2#2_Group Expr5 .
-Expr4    -> Expr3 FExpr3 .
+Expr4 -> Expr3 Expr41 .
+Expr41 -> Expr4@2#2_Group Expr3 Expr41 | .
 Expr4@2#2_Group -> until | through | downtill | downto .
-FExpr3   -> | Expr4@2#2_Group Expr4 .
-Expr3    -> Expr2 FExpr2 .
-FExpr2   -> | append Expr3 .
-Expr2    -> Expr1 FExpr1 .
+Expr3 -> Expr2 Expr31 .
+Expr31 -> append Expr2 Expr31 | .
+Expr2 -> Expr1 Expr21 .
+Expr21 -> Expr2@2#2_Group Expr1 Expr21 | .
 Expr2@2#2_Group -> leftshift | rightshift .
-FExpr1   -> | Expr2@2#2_Group Expr2 .
-Expr1    -> Expr0 FExpr0 .
-FExpr0   -> | exponent Expr1 .
-Expr0 -> Term FTerm .
+Expr1 -> Expr0 FExpr0 .
+FExpr0 -> | exponent Expr1 .
+Expr0 -> Term Expr01 .
+Expr01 -> Expr0@2#2_Group Term Expr01 | .
 Expr0@2#2_Group -> add | sub .
-
-FTerm -> | Expr0@2#2_Group Expr0 .
-Term -> Subterm FSubterm .
+Term -> Subterm Term1 .
+Term1 -> Term@2#2_Group Subterm Term1 | .
 Term@2#2_Group -> mul | div | mod .
-
-FSubterm -> | Term@2#2_Group Term .
 Subterm -> Factor | Subterm@2#1_Group Factor .
 Subterm@2#1_Group -> not | add | sub .
-
 Factor -> Primary Factor#2_Group .
-Factor#2_Group -> Chained_method_invocation|    .
-
+Factor#2_Group -> Chained_method_invocation | .
 Primary -> lparen Expr Primary@1#3_Star primary@1#4_Option rparen | Subprimary .
-Primary@1#3_Group  -> comma Expr .
-Primary@1#3_Star   -> | Primary@1#3_Group Primary@1#3_Star .
-Primary@1#4_Option -> | comma .
-
+Primary@1#3_Star -> | Primary@1#3_Group Primary@1#3_Star .
+Primary@1#3_Group -> comma Expr .
+Primary@1#4_Option ->  | comma.
 Subprimary -> Literal_primary .

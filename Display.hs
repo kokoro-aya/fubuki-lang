@@ -6,6 +6,19 @@ import Data.List (intercalate)
 class Display a where
     display :: a -> String
 
+instance (Display a, Display b) => Display (Either a b) where
+    display (Left a) = display a
+    display (Right b) = display b
+
+instance (Display a, Display b) => Display (a, b) where
+    display (a, b) = "(" ++ display a ++ ", " ++ display b ++ ")"
+
+instance Display a => Display [a] where
+    display a = "[" ++ (intercalate ", " . map display $ a) ++ "]"
+
+instance Display Char where
+    display c = [c]
+
 instance Display Token where
     display (Token t r c) = display t ++ " at: R:" ++ show r ++ ",C:" ++ show c ++ ".\n"
 
