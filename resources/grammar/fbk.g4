@@ -78,19 +78,19 @@ type_annotation: ':' type;
 pattern: wildcard_pattern
        | identifier_pattern type_annotation?
        | tuple_pattern
-       | subscript_pattern;
+       | subscript_pattern type_annotation?;
+
 
 identifier_pattern: IDENTIFIER;
 wildcard_pattern: '_';
 tuple_pattern: '(' tuple_pattern_elements ')';
-tuple_pattern_elements: tuple_pattern_element (',' tuple_pattern_element)*;
-tuple_pattern_element: (wildcard_pattern | subscript_pattern | identifier_pattern) type_annotation? | '_';
+tuple_pattern_elements: pattern (',' pattern)*;
 subscript_pattern: IDENTIFIER ('[' subscript ']')+;
 subscript: IDENTIFIER | literal | reverse_subscript | slice_subscript | expr;
 reverse_subscript: '^' expr;
-slice_subscript: slice_subscript_part '..' slice_subscript_part
-               | '..' slice_subscript_part
-               | slice_subscript_part '..';
+slice_subscript: slice_subscript_part
+               | slice_subscript_part '..' slice_subscript_part?
+               | '..' slice_subscript_part;
 slice_subscript_part: reverse_subscript | expr;
 
 switch_expression: 'switch' '{' switch_expr_arm+ '}';

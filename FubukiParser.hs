@@ -1,10 +1,10 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, wildcard, identifier )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, wildcard, identifier, lbracket, rbracket, column, arrow, slice, caret, switch, lbrace, lamArr, rbrace )
 import Control.Applicative ((<|>))
 import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -19,7 +19,9 @@ operatorToken = satisfy "literal token expected" (isOperator . tokenType)
 ----------------------------
 
 
-expr = exprLevel9
+expr = do e <- exprLevel9
+          (do SwitchExpr e <$> switchExpression)
+            <|> pure e
 
 exprLevel9 = do
               p <- pattern_
@@ -160,7 +162,9 @@ subPrimary = literalPrimary <|> variablePrimary
 
 variablePrimary = VariablePrimary <$> pattern_
 
-literalPrimary = RealPrimary <$> realLiteral
+literalPrimary = literal
+
+literal = RealPrimary <$> realLiteral
                  <|>
                      IntPrimary <$> intLiteral
                      <|>
@@ -170,13 +174,80 @@ literalPrimary = RealPrimary <$> realLiteral
                              <|>
                                  BoolPrimary <$> boolLiteral
 
+----------------------------
+--    Parser for types    --
+----------------------------
+
+type_ = do arrayType <|> functionOrTupleType <|> typeIdentifier
+
+arrayType = do lbracket
+               t <- type_
+               rbracket
+               pure $ ArrayType t
+
+functionOrTupleType = do lparen
+                         tx <- sepBy1 type_ comma
+                         rparen
+                         arrow
+                         (do FunctionType tx <$> type_)
+                             <|> pure (TupleType tx)
+
+typeIdentifier = do t <- identifier
+                    pure . SimpleType . identifierName . tokenType $ t
+
+typeAnnotation = do column
+                    type_
+
 
 ----------------------------
 --  Parser for patterns   --
 ----------------------------
 
-pattern_ = wildcardPattern <|> identifierPattern
+pattern_ = wildcardPattern <|> identifierPattern <|> tuplePattern <|> subscriptPattern
 
 wildcardPattern = wildcard >> pure WildcardPattern
 
-identifierPattern = identifier >>= \x -> pure . IdentifierPattern . identifierName . tokenType $ x
+identifierPattern = do id <- identifier
+                       (do ty <- typeAnnotation
+                           pure $ IdentifierPattern (identifierName . tokenType $ id) (Just ty))
+                            <|> pure (IdentifierPattern (identifierName . tokenType $ id) Nothing)
+
+tuplePattern = do lparen
+                  ps <- sepBy1 pattern_ comma
+                  rparen
+                  pure $ TuplePattern ps
+
+subscriptPattern = do id <- identifier
+                      xs <- sepBy1 (do lbracket
+                                       s <- subscript
+                                       rbracket
+                                       pure s) comma
+                      (do SubscriptPattern (identifierName . tokenType $ id) xs . Just <$> typeAnnotation)
+                          <|> pure (SubscriptPattern (identifierName . tokenType $ id) xs Nothing)
+
+subscript = do  a <- expr
+                (do slice
+                    (do Subscript (Just a) . Just <$> expr)
+                        <|> pure (Subscript (Just a) Nothing))
+
+----------------------------
+--   Switch expressions   --
+----------------------------
+
+switchExpression = do switch
+                      lbrace
+                      arms <- sepByOpt switchExprArm comma
+                      rbrace
+                      pure arms
+
+switchExprArm = do literalArm <|> defaultArm
+
+literalArm = do l <- literal
+                lamArr
+                r <- expr
+                pure (Just l, r)
+
+defaultArm = do wildcard
+                lamArr
+                r <- expr
+                pure (Nothing, r)

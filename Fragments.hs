@@ -1,7 +1,7 @@
 module Fragments where
 
 import Parser (satisfy)
-import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident), literalValue, charLiteralValue)
+import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident, COLUMN, LBRACKET, RBRACKET, ARROW, SLICE, CARET, SWITCH, LBRACE, RBRACE, LPAREN, RPAREN, COMMA, LAM_ARR), literalValue, charLiteralValue)
 import ParseSymbols (dot)
 import Utils (readToInt, readToDouble)
 import Control.Applicative ((<|>))
@@ -48,8 +48,30 @@ isIdentifier _ = False
 
 identifier = satisfy "variable token expected" (isIdentifier . tokenType)
 
-isWildcard ULINE = True
-isWildcard _ = False
+wildcard = satisfy "wildcard token \"_\" expected" ((== ULINE) . tokenType)
 
-wildcard = satisfy "wildcard token \"_\" expected" (isWildcard . tokenType)
+column = satisfy "column token \":\" expected" ((== COLUMN) . tokenType)
 
+lbracket = satisfy "left bracket token \"[\" expected" ((== LBRACKET) . tokenType)
+
+rbracket = satisfy "right bracket token \"]\" expected" ((== RBRACKET) . tokenType)
+
+lbrace = satisfy "left bracket token \"[\" expected" ((== LBRACE) . tokenType)
+
+rbrace = satisfy "right bracket token \"]\" expected" ((== RBRACE) . tokenType)
+
+lparen = satisfy "left bracket token \"[\" expected" ((== LPAREN) . tokenType)
+
+rparen = satisfy "right bracket token \"]\" expected" ((== RPAREN) . tokenType)
+
+arrow = satisfy "arrow token \"->\" expected" ((== ARROW) . tokenType)
+
+slice = satisfy "slice token \"..\" expected" ((== SLICE) . tokenType)
+
+caret = satisfy "caret token \"^\" expected" ((== CARET) . tokenType)
+
+switch = satisfy "switch token \"switch\" expected" ((== SWITCH ) . tokenType)
+
+comma = satisfy "comma token \",\" expected" ((== COMMA) . tokenType)
+
+lamArr = satisfy "double arrow \"=>\" expected" ((== LAM_ARR) . tokenType)

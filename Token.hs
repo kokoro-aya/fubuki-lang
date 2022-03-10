@@ -31,7 +31,7 @@ data TokenType = Numeric String
             | THROUGH | UNTIL | DOWNTO | DOWNTHROUGH    -- ... ..< >>. >..
             | STEP                                      -- @
             | APPEND                                    -- ++
-            | DOT | COLUMN | DOUBLE_COLUMN              -- . : ::
+            | DOT | COLUMN | DOUBLE_COLUMN | SLICE      -- . : :: ..
 
             | ULINE                                 -- _
             | FOR | IN | IF | ELSE | WHILE | RETURN -- for, in, if, else, while, return
@@ -61,6 +61,7 @@ isOperator tok = case tok of
     THROUGH -> True ; UNTIL -> True ; DOWNTO -> True ; DOWNTHROUGH -> True
     STEP -> True
     APPEND -> True
+    SLICE -> True
     (Oper _) -> True
     _ -> False
 

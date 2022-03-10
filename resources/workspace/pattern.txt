@@ -1,0 +1,191 @@
+------------------------
+
+Converted using ebnf2bnf.
+
+------------------------
+    Original grammar
+------------------------
+
+expr -> expr9 (switch_expression | ).
+expr9 -> factor | pattern ASSIGNOP factor | lambda_expression.
+factor -> primary (chained_method_invocation | ).
+primary -> LPAREN expr (COMMA expr)* COMMA? RPAREN | subprimary.
+subprimary -> literal_primary | function_call_primary | variable_primary | function_declaration.
+literal_primary -> literal | array_literal.
+array_literal -> LBRACKET expr (COMMA expr)* COMMA? RBRACKET.
+variable_primary -> pattern type_annotation?.
+function_call_primary -> IDENTIFIER function_call_argument_clause.
+function_call_argument_clause -> LPAREN function_call_argument_list? RPAREN.
+function_call_argument_list -> function_call_argument (COMMA function_call_argument)*.
+function_call_argument -> (IDENTIFIER COLUMN)? expr.
+chained_method_invocation -> (DOT function_call_primary)+.
+type -> function_type | array_type | type_identifier | tuple_type.
+function_type -> tuple_type ARROW type.
+tuple_type -> LPAREN tuple_argument_list? RPAREN.
+tuple_argument_list -> type (COMMA type)*.
+array_type -> LBRACKET type RBRACKET.
+type_identifier -> IDENTIFIER.
+type_annotation -> COLUMN type.
+pattern -> wildcard_pattern | identifier_pattern type_annotation? | tuple_pattern | subscript_pattern type_annotation?.
+identifier_pattern -> IDENTIFIER.
+wildcard_pattern -> ULINE.
+tuple_pattern -> LPAREN tuple_pattern_elements RPAREN.
+tuple_pattern_elements -> pattern (COMMA pattern)*.
+subscript_pattern -> IDENTIFIER (LBRACKET subscript RBRACKET)+.
+subscript -> IDENTIFIER | literal | reverse_subscript | slice_subscript | expr.
+reverse_subscript -> CARET expr.
+slice_subscript -> slice_subscript_part | slice_subscript_part SLICE slice_subscript_part? | SLICE slice_subscript_part.
+slice_subscript_part -> reverse_subscript | expr.
+switch_expression -> SWITCH LBRACE switch_expr_arm+ RBRACE.
+switch_expr_arm -> literal_arm COMMA? | default_arm.
+default_arm -> ULINE LAM_APP expr.
+literal_arm -> literal LAM_APP expr.
+lambda_expression -> function_declaration.
+
+------------------------
+     Output grammar
+------------------------
+
+Array_literal -> lbracket Expr Array_literal#3_Star array_literal#4_option rbracket.
+Array_literal#3_Group -> comma Expr.
+Array_literal#3_Star ->  | Array_literal#3_Group Array_literal#3_Star.
+Array_literal#4_Option ->  | comma.
+Array_type -> lbracket Type rbracket.
+Chained_method_invocation -> Chained_method_invocation#1_Plus1.
+Chained_method_invocation#1_Group -> dot Function_call_primary.
+Chained_method_invocation#1_Plus1 -> Chained_method_invocation#1_Group Chained_method_invocation#1_Plus2.
+Chained_method_invocation#1_Plus2 -> Chained_method_invocation#1_Plus1 | .
+Default_arm -> uline lam_app Expr.
+Expr -> Expr9 Expr#2_Group.
+Expr#2_Group -> Switch_expression | .
+Expr9 -> Factor | Pattern assignop Factor | Lambda_expression.
+Factor -> Primary Factor#2_Group.
+Factor#2_Group -> Chained_method_invocation | .
+Function_call_argument -> Function_call_argument#1_Option Expr.
+Function_call_argument_clause -> lparen Function_call_argument_clause#2_Option rparen.
+Function_call_argument_clause#2_Option ->  | Function_call_argument_list.
+Function_call_argument_list -> Function_call_argument Function_call_argument_list#2_Star.
+Function_call_argument_list#2_Group -> comma Function_call_argument.
+Function_call_argument_list#2_Star ->  | Function_call_argument_list#2_Group Function_call_argument_list#2_Star.
+Function_call_argument#1_Group -> Identifier column.
+Function_call_argument#1_Option ->  | Function_call_argument#1_Group.
+Function_call_primary -> Identifier Function_call_argument_clause.
+Function_type -> | arrow Type.
+Function_or_tuple_type -> Tuple_type Function_type.
+Identifier_pattern -> Identifier.
+Lambda_expression -> Function_declaration.
+Literal_arm -> Literal lam_app Expr.
+Literal_primary -> Literal | Array_literal.
+Pattern -> Wildcard_pattern | Identifier_pattern Pattern@2#2_Option | Tuple_pattern | Subscript_pattern Pattern@2#2_Option.
+Pattern@2#2_Option ->  | Type_annotation.
+Primary -> lparen Expr Primary@1#3_Star primary@1#4_option rparen | Subprimary.
+Primary@1#3_Group -> comma Expr.
+Primary@1#3_Star ->  | Primary@1#3_Group Primary@1#3_Star.
+Primary@1#4_Option ->  | comma.
+Reverse_subscript -> caret Expr.
+Slice_subscript -> Slice_subscript_part slice_subscript@1#2_Option | slice Slice_subscript_part.
+Slice_subscript_part -> Reverse_subscript | Expr.
+Slice_subscript@1#2_Option -> slice Slice_subscript@1#2_Option@1#2_Option.
+Slice_subscript@1#2_Option@1#2_Option -> | Slice_subscript_part.
+Subprimary -> Literal_primary | Function_call_primary | Variable_primary | Function_declaration.
+Subscript -> Identifier | Literal | Slice_subscript .
+Subscript_pattern -> Identifier Subscript_pattern#2_Plus1.
+Subscript_pattern#2_Group -> lbracket Subscript rbracket.
+Subscript_pattern#2_Plus1 -> Subscript_pattern#2_Group Subscript_pattern#2_Plus2.
+Subscript_pattern#2_Plus2 -> Subscript_pattern#2_Plus1 | .
+Switch_expr_arm -> Literal_arm switch_expr_arm@1#2_option | Default_arm.
+Switch_expr_arm@1#2_Option ->  | comma.
+Switch_expression -> switch lbrace Switch_expression#3_Plus1 rbrace.
+Switch_expression#3_Plus1 -> Switch_expr_arm Switch_expression#3_Plus2.
+Switch_expression#3_Plus2 -> Switch_expression#3_Plus1 | .
+Tuple_argument_list -> Type Tuple_argument_list#2_Star.
+Tuple_argument_list#2_Group -> comma Type.
+Tuple_argument_list#2_Star ->  | Tuple_argument_list#2_Group Tuple_argument_list#2_Star.
+Tuple_pattern -> lparen Tuple_pattern_elements rparen.
+Tuple_pattern_elements -> Pattern Tuple_pattern_elements#2_Star.
+Tuple_pattern_elements#2_Group -> comma Pattern.
+Tuple_pattern_elements#2_Star ->  | Tuple_pattern_elements#2_Group Tuple_pattern_elements#2_Star.
+Tuple_type -> lparen Tuple_type#2_Option rparen.
+Tuple_type#2_Option ->  | Tuple_argument_list.
+Type -> Function_type | Array_type | Type_identifier | Function_or_tuple_type.
+Type_annotation -> column Type.
+Type_identifier -> Identifier.
+Variable_primary -> Pattern Variable_primary#2_Option.
+Variable_primary#2_Option ->  | Type_annotation.
+Wildcard_pattern -> uline.
+
+------------------------
+  Sorted
+------------------------
+
+
+Expr -> Expr9 Expr#2_Group.
+Expr#2_Group -> Switch_expression | .
+Expr9 -> Factor | Pattern assignop Factor | Lambda_expression.
+Factor -> Primary Factor#2_Group.
+Factor#2_Group -> Chained_method_invocation | .
+Primary -> lparen Expr Primary@1#3_Star primary@1#4_option rparen | Subprimary.
+Primary@1#3_Group -> comma Expr.
+Primary@1#3_Star ->  | Primary@1#3_Group Primary@1#3_Star.
+Primary@1#4_Option ->  | comma.
+Subprimary -> Literal_primary | Function_call_primary | Variable_primary | Function_declaration.
+
+Literal_primary -> Literal | Array_literal.
+Array_literal -> lbracket Expr Array_literal#3_Star array_literal#4_option rbracket.
+Array_literal#3_Group -> comma Expr.
+Array_literal#3_Star ->  | Array_literal#3_Group Array_literal#3_Star.
+Array_literal#4_Option ->  | comma.
+Variable_primary -> Pattern Variable_primary#2_Option.
+Variable_primary#2_Option ->  | Type_annotation.
+Function_call_primary -> Identifier Function_call_argument_clause.
+Function_call_argument_clause -> lparen Function_call_argument_clause#2_Option rparen.
+Function_call_argument_clause#2_Option ->  | Function_call_argument_list.
+Function_call_argument_list -> Function_call_argument Function_call_argument_list#2_Star.
+Function_call_argument_list#2_Group -> comma Function_call_argument.
+Function_call_argument_list#2_Star ->  | Function_call_argument_list#2_Group Function_call_argument_list#2_Star.
+Function_call_argument -> Function_call_argument#1_Option Expr.
+Function_call_argument#1_Group -> Identifier column.
+Function_call_argument#1_Option ->  | Function_call_argument#1_Group.
+Chained_method_invocation -> Chained_method_invocation#1_Plus1.
+Chained_method_invocation#1_Group -> dot Function_call_primary.
+Chained_method_invocation#1_Plus1 -> Chained_method_invocation#1_Group Chained_method_invocation#1_Plus2.
+Chained_method_invocation#1_Plus2 -> Chained_method_invocation#1_Plus1 | .
+
+Type -> Array_type | Type_identifier | Function_or_tuple_type.
+Function_or_tuple_type -> Tuple_type Function_type.
+Function_type -> | arrow Type.
+Tuple_type -> lparen Tuple_type#2_Option rparen.
+Tuple_type#2_Option ->  | Tuple_argument_list.
+Tuple_argument_list -> Type Tuple_argument_list#2_Star.
+Tuple_argument_list#2_Group -> comma Type.
+Tuple_argument_list#2_Star ->  | Tuple_argument_list#2_Group Tuple_argument_list#2_Star.
+Array_type -> lbracket Type rbracket.
+Type_identifier -> Identifier.
+Type_annotation -> column Type.
+
+Pattern -> Wildcard_pattern | Identifier_pattern Pattern@2#2_Option | Tuple_pattern | Subscript_pattern Pattern@2#2_Option.
+Pattern@2#2_Option ->  | Type_annotation.
+Identifier_pattern -> Identifier.
+Wildcard_pattern -> uline.
+Tuple_pattern -> lparen Tuple_pattern_elements rparen.
+Tuple_pattern_elements -> Pattern Tuple_pattern_elements#2_Star.
+Tuple_pattern_elements#2_Group -> comma Pattern.
+Tuple_pattern_elements#2_Star ->  | Tuple_pattern_elements#2_Group Tuple_pattern_elements#2_Star.
+Subscript_pattern -> Identifier Subscript_pattern#2_Plus1.
+Subscript_pattern#2_Group -> lbracket Subscript rbracket.
+Subscript_pattern#2_Plus1 -> Subscript_pattern#2_Group Subscript_pattern#2_Plus2.
+Subscript_pattern#2_Plus2 -> Subscript_pattern#2_Plus1 | .
+Subscript -> Slice_subscript .
+Slice_subscript -> Expr slice_subscript@1#2_Option | slice Expr.
+Slice_subscript@1#2_Option -> slice Slice_subscript@1#2_Option@1#2_Option.
+Slice_subscript@1#2_Option@1#2_Option -> | Expr.
+
+Switch_expression -> switch lbrace Switch_expression#3_Plus1 rbrace.
+Switch_expression#3_Plus1 -> Switch_expr_arm Switch_expression#3_Plus2.
+Switch_expression#3_Plus2 -> Switch_expression#3_Plus1 | .
+Switch_expr_arm -> Literal_arm switch_expr_arm@1#2_option | Default_arm.
+Switch_expr_arm@1#2_Option ->  | comma.
+Default_arm -> uline lam_app Expr.
+Literal_arm -> Literal lam_app Expr.
+Lambda_expression -> Function_declaration.
+

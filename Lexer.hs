@@ -208,6 +208,7 @@ matchSymbolToken ">>." = DOWNTO
 matchSymbolToken ">.." = DOWNTHROUGH
 matchSymbolToken "@" = STEP
 matchSymbolToken "++" = APPEND
+matchSymbolToken ".." = SLICE
 matchSymbolToken "." = DOT
 matchSymbolToken "::" = DOUBLE_COLUMN
 matchSymbolToken ":" = COLUMN

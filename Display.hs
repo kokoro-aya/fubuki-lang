@@ -25,6 +25,7 @@ instance Display Token where
 instance Display TokenType where
     display (Str t) = "\"" ++ t ++ "\""
     display (Chr t) = "'" ++ [t] ++ "'"
+    display (Numeric t) = t
     display (Oper t) = t
     display LINTERP = "("
     display RINTERP = ")"
@@ -101,6 +102,12 @@ instance Display Primary where
 
 instance Display Pattern where
     display WildcardPattern = "_"
-    display (IdentifierPattern str) = str
+    display (IdentifierPattern str Nothing) = str
+    display (IdentifierPattern str (Just ty)) = str ++ ":" ++ display ty
     display (TuplePattern pats) = "(" ++ intercalate ", " (map display pats) ++ ")"
-    display (SubscriptPattern patt exps) = display patt ++ foldr (\exp acc -> "[" ++ display exp ++ "]" ++ acc) "" exps
+    
+instance Display Type where
+    display (FunctionType tx ty) = "(" ++ intercalate "," (map display tx) ++ " -> " ++ display ty ++ ")"
+    display (ArrayType ty) = "[" ++ display ty ++ "]"
+    display (TupleType ty) = "(" ++ intercalate ", " (map display ty) ++ ")"
+    display (SimpleType ty) = ty

@@ -102,3 +102,12 @@ leftAssociate beg p2 tf = do x <- beg
                                 let (hb, ha) = head xs in
                                 let rev = reverse $ tail xs in
                                     pure $ foldl (\acc (bx, ax) -> tf bx acc ax) (tf hb x ha) rev
+
+-- a b a b a | a a b a | a a a
+
+sepByOpt :: Parser a -> Parser b -> Parser [a]
+sepByOpt p sep = do x <- p
+                    xs <- many ((do _ <- sep
+                                    p)
+                                   <|> p)
+                    pure (x:xs) <|> pure [x]

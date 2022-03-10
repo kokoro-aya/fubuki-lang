@@ -8,6 +8,7 @@ data Expr = UnaryExpr Op Expr
           | PrimaryExpr Primary
           | Parenthesis Expr
           | TupleExpr [Expr]
+          | SwitchExpr Expr [(Maybe Primary, Expr)]
           | AssignedExpr Op Pattern Expr deriving (Eq)
 
 data Primary = IntPrimary Int
@@ -15,9 +16,18 @@ data Primary = IntPrimary Int
              | CharPrimary Char
              | StrPrimary String
              | BoolPrimary Bool
+             | ArrayPrimary [Expr]
+             | FunctionCallPrimary String [Expr]
              | VariablePrimary Pattern deriving (Eq)
 
+data Type = FunctionType [Type] Type
+          | ArrayType Type
+          | TupleType [Type]
+          | SimpleType String deriving (Eq)
+
 data Pattern = WildcardPattern
-             | IdentifierPattern String
+             | IdentifierPattern String (Maybe Type)
              | TuplePattern [Pattern]
-             | SubscriptPattern Pattern [Expr] deriving (Eq)
+             | SubscriptPattern String [Subscript] (Maybe Type) deriving (Eq)
+
+data Subscript = Subscript (Maybe Expr) (Maybe Expr) deriving (Eq)
