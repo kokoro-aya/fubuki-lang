@@ -225,13 +225,19 @@ identifierOrSubscriptPattern = do id <- identifier
                                     <|> (do IdentifierPattern id_ . Just <$> typeAnnotation
                                         <|> pure (IdentifierPattern id_ Nothing))
 
-subscript = (do a <- expr
-                (do slice
-                    (do SliceSubscript a <$> expr)
-                    <|> pure (FromSubscript a))
-                    <|> pure (SimpleSubscript a))
-                    <|> (do slice
-                            ToSubscript <$> expr)
+subscript = (do s <- expr
+                (do v <- subscriptLatter
+                    case v of Nothing -> pure $ FromSubscript s
+                              Just v' -> pure $ SliceSubscript s v')
+                    <|> pure (SimpleSubscript s))
+            <|> do  slice
+                    e <- expr
+                    pure (ToSubscript e)
+
+subscriptLatter = do slice
+                     (do b <- expr
+                         pure $ Just b
+                         <|> pure Nothing) -- be careful on indentation and parenthesis
 
 
 ----------------------------

@@ -16,6 +16,10 @@ instance (Display a, Display b) => Display (a, b) where
 instance Display a => Display [a] where
     display a = "[" ++ (intercalate ", " . map display $ a) ++ "]"
 
+instance Display a => Display (Maybe a) where
+    display Nothing = "Nothing"
+    display (Just a) = "Just " ++ display a
+
 instance Display Char where
     display c = [c]
 

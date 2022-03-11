@@ -12,3 +12,4 @@ Current status:
 - [x] Lexer with enhanced features.
 - [x] Parser to generate AST for simple expressions.
 - [x] Custom operators in AST generation.
+- [x] Type notations and patterns.
