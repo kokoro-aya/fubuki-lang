@@ -3,6 +3,7 @@ module Parser where
 import Token ( Token (line, pos) )
 import Control.Applicative ( Alternative(empty, (<|>)) )
 import Data.Char (isDigit)
+import Display (display)
 
 newtype Parser a = P ([Token] -> Either String (a, [Token]))
 
@@ -41,7 +42,7 @@ satisfy :: String -> (Token -> Bool) -> Parser Token
 satisfy m f = do t <- item
                  if f t then pure t else
                     let (r, p) = (line t, pos t) in
-                        P (\_ -> Left $ "Error around " ++ show r ++ ":" ++ show p ++ ", " ++ m ++ ".")
+                        P (\_ -> Left $ "Error around " ++ show r ++ ":" ++ show p ++ ", " ++ m ++ ", but has " ++ display t ++ ".")
 
 
 choice :: [Parser a] -> Parser a
@@ -68,18 +69,14 @@ many p = some p <|> pure []
 --  | a b a | a b a b a
 
 sepBy :: Parser a -> Parser b -> Parser [a]
-sepBy p sep = do x <- p
-                 xs <- many (do _ <- sep
-                                p)
-                 pure (x:xs)
+sepBy p sep = sepBy1 p sep <|> pure []
 
 --  a | a b a
 
 sepBy1 :: Parser a -> Parser b -> Parser [a]
 sepBy1 p sep = do x <- p
-                  xs <- many (do _ <- sep
-                                 p)
-                  pure (x:xs) <|> pure [x]
+                  xs <- many (sep >> p)
+                  pure (x:xs)
 
 sepEndBy :: Parser a -> Parser b -> Parser [a]
 sepEndBy p sep = do xs <- sepBy p sep

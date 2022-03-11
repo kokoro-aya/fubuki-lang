@@ -1,9 +1,13 @@
-import Tests.TestExpressions (testExpressionCases)
-import ParseTopLevel (testParseTopLevel)
+import ParseTopLevel (testParse)
 import Utils (putLine)
+import Tests.TestExpressions (testExpressionCases)
+import Tests.TestTypes (testTypeCases)
+import Tests.TestPatterns (testPatternCases)
+import FubukiParser (expr, type_, pattern_)
 
-testExpressions = do
-    putStrLn "-- Test Expressions Begin --"
+
+testSuite name p test = do
+    putStrLn $ "-- Test " ++ name ++ " Begin --"
     putLine
 
     mapM_ (\(name, cases) -> do putStrLn "--------------------------------------------------------"
@@ -14,15 +18,17 @@ testExpressions = do
                                                               putStrLn "Code: "
                                                               putStrLn code
                                                               putStrLn "Generated ADT: "
-                                                              print . testParseTopLevel $ code
+                                                              print . testParse p $ code
                                                               putLine
                                                               putLine
                                                               pure ()) cases
 
                                 putLine
                                 pure ()
-                                ) . filter (\(_, xs) -> not $ null xs) $ testExpressionCases
-    putStrLn "-- Test Expressions End --"
+                                ) . filter (\(_, xs) -> not $ null xs) $ test
+    putStrLn $ "-- Test " ++ name ++ " End --"
 
 main = do
-        testExpressions
+        -- testSuite "Expressions" expr testExpressionCases
+        testSuite "Types" type_ testTypeCases
+        testSuite "Patterns" pattern_ testPatternCases

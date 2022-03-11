@@ -30,7 +30,7 @@ isHexChar :: Char -> Bool
 isHexChar c = c `elem` "0123456789abcdefABCDEF_"
 
 isSymbolHead :: Char -> Bool
-isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^.@"
+isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^.@:"
 
 isSymbolChar :: Char -> Bool
 isSymbolChar c = c `elem` "$=-&+-*%<>~!|^.@:?" -- remove / to prevent clash with comments

@@ -3,8 +3,8 @@ module ParseTopLevel where
 import ADT (Expr)
 import FubukiParser (expr)
 import Lexer (lexing)
-import Parser (parse)
-import Display (display)
+import Parser (parse, Parser)
+import Display (display, Display)
 
 type TopLevel = Expr
 
@@ -13,5 +13,5 @@ topLevel = expr
 parseTopLevel :: String -> Expr
 parseTopLevel = either (error . show) fst . parse topLevel . lexing
 
-testParseTopLevel :: String -> String
-testParseTopLevel = either (\x -> "Syntax error: " ++ show x) (display . fst) . parse topLevel . lexing
+testParse :: Display a => Parser a -> String -> String
+testParse p = either (\x -> "Syntax error: " ++ show x) (display . fst) . parse p . lexing

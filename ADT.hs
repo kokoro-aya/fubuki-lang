@@ -30,4 +30,7 @@ data Pattern = WildcardPattern
              | TuplePattern [Pattern]
              | SubscriptPattern String [Subscript] (Maybe Type) deriving (Eq)
 
-data Subscript = Subscript (Maybe Expr) (Maybe Expr) deriving (Eq)
+data Subscript = SimpleSubscript Expr
+               | SliceSubscript Expr Expr 
+               | FromSubscript Expr 
+               | ToSubscript Expr deriving (Eq)

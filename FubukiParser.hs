@@ -1,13 +1,14 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some)
 import ADT
 import Fragments
     ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, wildcard, identifier, lbracket, rbracket, column, arrow, slice, caret, switch, lbrace, lamArr, rbrace )
 import Control.Applicative ((<|>))
 import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
+import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript))
 
 literalToken = satisfy "literal token expected" (isLiteral . tokenType)
 referenceToken = satisfy "reference token expected" (isReference . tokenType)
@@ -186,10 +187,11 @@ arrayType = do lbracket
                pure $ ArrayType t
 
 functionOrTupleType = do lparen
-                         tx <- sepBy1 type_ comma
+                         tx <- sepBy type_ comma
                          rparen
-                         arrow
-                         (do FunctionType tx <$> type_)
+                         (do arrow
+                             ty <- type_
+                             pure $ FunctionType tx ty)
                              <|> pure (TupleType tx)
 
 typeIdentifier = do t <- identifier
@@ -203,32 +205,34 @@ typeAnnotation = do column
 --  Parser for patterns   --
 ----------------------------
 
-pattern_ = wildcardPattern <|> identifierPattern <|> tuplePattern <|> subscriptPattern
+pattern_ = wildcardPattern <|> tuplePattern <|> identifierOrSubscriptPattern -- priority order
 
 wildcardPattern = wildcard >> pure WildcardPattern
-
-identifierPattern = do id <- identifier
-                       (do ty <- typeAnnotation
-                           pure $ IdentifierPattern (identifierName . tokenType $ id) (Just ty))
-                            <|> pure (IdentifierPattern (identifierName . tokenType $ id) Nothing)
 
 tuplePattern = do lparen
                   ps <- sepBy1 pattern_ comma
                   rparen
                   pure $ TuplePattern ps
 
-subscriptPattern = do id <- identifier
-                      xs <- sepBy1 (do lbracket
-                                       s <- subscript
-                                       rbracket
-                                       pure s) comma
-                      (do SubscriptPattern (identifierName . tokenType $ id) xs . Just <$> typeAnnotation)
-                          <|> pure (SubscriptPattern (identifierName . tokenType $ id) xs Nothing)
+identifierOrSubscriptPattern = do id <- identifier
+                                  let id_ = identifierName . tokenType $ id in
+                                    (do xs <- some (do  lbracket
+                                                        s <- subscript
+                                                        rbracket
+                                                        pure s)
+                                        (do SubscriptPattern id_ xs . Just <$> typeAnnotation)
+                                            <|> pure (SubscriptPattern id_ xs Nothing))
+                                    <|> (do IdentifierPattern id_ . Just <$> typeAnnotation
+                                        <|> pure (IdentifierPattern id_ Nothing))
 
-subscript = do  a <- expr
+subscript = (do a <- expr
                 (do slice
-                    (do Subscript (Just a) . Just <$> expr)
-                        <|> pure (Subscript (Just a) Nothing))
+                    (do SliceSubscript a <$> expr)
+                    <|> pure (FromSubscript a))
+                    <|> pure (SimpleSubscript a))
+                    <|> (do slice
+                            ToSubscript <$> expr)
+
 
 ----------------------------
 --   Switch expressions   --

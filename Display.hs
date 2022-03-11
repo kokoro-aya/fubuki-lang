@@ -103,11 +103,19 @@ instance Display Primary where
 instance Display Pattern where
     display WildcardPattern = "_"
     display (IdentifierPattern str Nothing) = str
-    display (IdentifierPattern str (Just ty)) = str ++ ":" ++ display ty
+    display (IdentifierPattern str (Just ty)) = str ++ "(:" ++ display ty ++ ")"
     display (TuplePattern pats) = "(" ++ intercalate ", " (map display pats) ++ ")"
+    display (SubscriptPattern name sx Nothing) = name ++ intercalate "" (map display sx)
+    display (SubscriptPattern name sx (Just ty)) = name ++ intercalate "" (map display sx) ++ "(:" ++ display ty ++ ")"
     
 instance Display Type where
-    display (FunctionType tx ty) = "(" ++ intercalate "," (map display tx) ++ " -> " ++ display ty ++ ")"
+    display (FunctionType tx ty) = "(" ++ intercalate ", " (map display tx) ++ ")" ++ " -> " ++ display ty 
     display (ArrayType ty) = "[" ++ display ty ++ "]"
     display (TupleType ty) = "(" ++ intercalate ", " (map display ty) ++ ")"
     display (SimpleType ty) = ty
+
+instance Display Subscript where
+    display (SimpleSubscript e) = "[" ++ display e ++ "]"
+    display (SliceSubscript e1 e2) = "[" ++ display e1 ++ ".." ++ display e2 ++ "]"
+    display (FromSubscript e) = "[" ++ display e ++ "..]"
+    display (ToSubscript e) = "[.." ++ display e ++ "]"

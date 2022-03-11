@@ -2,6 +2,8 @@
 
 // Tested OK
 
+_
+
 foo
 fo_oz
 _bar: int
@@ -14,10 +16,10 @@ _bar: int
 a[b]
 c[12]
 d[6 + 7]
-foo[^1]
+foo[-1]
 foo[1..]
 foo[..1]
 foo[1..4]
-foo[^6..]
+foo[-6..]
 foo[a + b .. 12 / 4 + 3 * 3]
 
