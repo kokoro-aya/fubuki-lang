@@ -42,10 +42,12 @@ data Statement = DeclStatement Declaration
                | RepeatWhileStatement [Expr] CodeBlock 
                | IfStatement IfBranch
                | SwitchStatement Expr [SwitchCase]
-               | BreakStatement | ContinueStatement | FallthroughStatement | ReturnStatement 
+               | BreakStatement | ContinueStatement | FallthroughStatement | ReturnStatement (Maybe Expr)
                | DoStatement CodeBlock deriving (Eq)
 
-data IfBranch = IfBranch [Expr] CodeBlock | IfElseBranch [Expr] CodeBlock IfBranch deriving (Eq)
+data IfBranch = IfBranch [Expr] CodeBlock 
+              | ElseBranch CodeBlock 
+              | IfElseBranch [Expr] CodeBlock IfBranch deriving (Eq)
 
 data SwitchCase = SwitchCase [Primary] CodeBlock | DefaultCase CodeBlock deriving (Eq)
 

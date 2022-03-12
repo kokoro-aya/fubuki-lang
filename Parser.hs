@@ -62,7 +62,6 @@ some p = do x <- p
             pure (x:xs)
 
 --  | a | a a | a a a ...
-
 many :: Parser a -> Parser [a]
 many p = some p <|> pure []
 
@@ -108,3 +107,11 @@ sepByOpt p sep = do x <- p
                                     p)
                                    <|> p)
                     pure (x:xs) <|> pure [x]
+
+-- a b | a
+
+endOptional :: Parser a -> Parser b -> Parser a
+endOptional p sep = do x <- p
+                       (do sep
+                           pure x)
+                            <|> pure x

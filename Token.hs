@@ -38,7 +38,7 @@ data TokenType = Numeric String
             | FOR | IN | IF | ELSE | WHILE | RETURN -- for, in, if, else, while, return
             | VAL | VAR | FN                        -- val, var, fn
             | REPEAT | SWITCH | CASE | DEFAULT      -- repeat, switch, case, default
-            | BREAK | CONTINUE | FALLTHRU           -- when, break, continue, fallthrough (:||)
+            | DO | BREAK | CONTINUE | FALLTHRU      -- do, break, continue, fallthrough (:||)
             deriving (Eq)
 
 isLiteral :: TokenType -> Bool

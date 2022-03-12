@@ -1,14 +1,14 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, wildcard, identifier, lbracket, rbracket, column, arrow, slice, caret, switch, lbrace, lamArr, rbrace )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough )
 import Control.Applicative ((<|>))
-import ParseSymbols (lparen, comma, rparen, notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, assignSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
+import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
-import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript))
+import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript), IfBranch (IfBranch))
 
 literalToken = satisfy "literal token expected" (isLiteral . tokenType)
 referenceToken = satisfy "reference token expected" (isReference . tokenType)
@@ -26,7 +26,7 @@ expr = do e <- exprLevel9
 
 exprLevel9 = do
               p <- pattern_
-              op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assignSymbol
+              op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
               AssignedExpr (Op op 12) p <$> exprLevel8
               <|> exprLevel8
 
@@ -210,7 +210,7 @@ typeAnnotation = do column
 
 pattern_ = wildcardPattern <|> tuplePattern <|> identifierOrSubscriptPattern -- priority order
 
-wildcardPattern = wildcard >> pure WildcardPattern
+wildcardPattern = uline >> pure WildcardPattern
 
 tuplePattern = do lparen
                   ps <- sepBy1 pattern_ comma
@@ -259,7 +259,7 @@ literalArm = do l <- literal
                 r <- expr
                 pure (Just l, r)
 
-defaultArm = do wildcard
+defaultArm = do uline
                 lamArr
                 r <- expr
                 pure (Nothing, r)
@@ -271,6 +271,110 @@ defaultArm = do wildcard
 -------------------------------
 --   Parser for statements   --
 -------------------------------
+
+statements = some statement
+
+statement = do  d <- endOptional declaration semicolon
+                pure $ DeclStatement d
+                <|> do  e <- endOptional expr semicolon
+                        pure $ ExprStatement e
+                <|> loopStatement
+                <|> branchStatement
+                <|> controlTransferStatement
+                <|> doStatement
+
+loopStatement = forInStatement <|> whileStatement <|> repeatWhileStatement
+
+forInStatement = do for
+                    v <- pattern_
+                    in_
+                    e <- expr
+                    s <- codeBlock
+                    pure $ ForInStatement v e s
+
+whileStatement = do while
+                    e <- sepBy1 expr comma
+                    s <- codeBlock
+                    pure $ WhileStatement e s
+
+repeatWhileStatement = do repeat_
+                          s <- codeBlock
+                          while
+                          e <- sepBy1 expr comma
+                          pure $ RepeatWhileStatement e s
+
+branchStatement = (IfStatement <$> ifStatement) <|> switchStatement
+
+ifStatement = do if_
+                 c <- sepBy1 expr comma
+                 s1 <- codeBlock
+                 (do e <- elseClause
+                     pure $ IfElseBranch c s1 e)
+                     <|> pure (IfBranch c s1)
+
+elseClause = do else_
+                (do i <- ifStatement
+                    pure i)
+                <|> (do s <- codeBlock
+                        pure $ ElseBranch s)
+
+switchStatement = do switch
+                     e <- expr
+                     lbrace 
+                     s <- some switchCase
+                     rbrace 
+                     pure $ SwitchStatement e s
+
+switchCase = (do xs <- caseLabel
+                 lbrace 
+                 st <- statements
+                 rbrace 
+                 pure $ SwitchCase xs st)
+                 <|> (do d <- defaultLabel
+                         lbrace 
+                         st <- statements
+                         rbrace 
+                         pure $ DefaultCase st)
+                         <|> (do xs <- caseLabel
+                                 st <- statements
+                                 pure $ SwitchCase xs st)
+                                 <|> (do d <- defaultLabel
+                                         st <- statements
+                                         pure $ DefaultCase st)
+
+caseLabel = do  case_
+                xs <-sepBy1 literal comma
+                column
+                pure xs
+
+defaultLabel = do default_
+                  column
+                  pure ()
+
+controlTransferStatement = breakStatement <|> continueStatement <|> returnStatement <|> fallthroughStatement
+
+breakStatement = do break_
+                    pure BreakStatement
+
+continueStatement = do continue_
+                       pure ContinueStatement
+
+fallthroughStatement = do fallthrough
+                          pure FallthroughStatement
+
+returnStatement = do retn
+                     (do e <- expr
+                         pure $ ReturnStatement (Just e))
+                        <|> pure (ReturnStatement Nothing)
+
+doStatement = do do_ 
+                 s <- codeBlock
+                 pure $ DoStatement s
+
+codeBlock = do lbrace
+               s <- statements
+               rbrace
+               pure s
 
 ---------------------------------
 --   Parser for declarations   --
