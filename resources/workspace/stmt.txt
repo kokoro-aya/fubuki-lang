@@ -1,0 +1,91 @@
+------------------------
+
+Converted using ebnf2bnf.
+
+------------------------
+    Original grammar
+------------------------
+
+statements -> statement+.
+statement -> declaration SEMICOLON? | expr SEMICOLON? | loop_statement SEMICOLON? | branch_statement SEMICOLON? | control_transfer_statement SEMICOLON? | do_statement SEMICOLON?.
+loop_statement -> for_in_statement | while_statement | repeat_while_statement.
+for_in_statement -> FOR pattern IN expr code_block.
+while_statement -> WHILE condition_list code_block.
+condition_list -> condition (COMMA condition)*.
+condition -> expr.
+repeat_while_statement -> REPEAT code_block WHILE expr.
+branch_statement -> if_statement | switch_statement.
+if_statement -> IF condition_list code_block else_clause?.
+else_clause -> ELSE code_block | ELSE if_statement.
+switch_statement -> SWITCH expr LBRACE switch_cases? RBRACE.
+switch_cases -> switch_case+.
+switch_case -> case_label LBRACE? statements RBRACE? | default_label LBRACE? statement RBRACE?.
+case_label -> CASE case_item_list COLUMN.
+case_item_list -> case_item (COMMA case_item)*.
+case_item -> literal.
+default_label -> DEFAULT COLUMN.
+control_transfer_statement -> break_statement | continue_statement | fallthrough_statement | return_statement.
+break_statement -> BREAK.
+continue_statement -> CONTINUE.
+fallthrough_statement -> FALLTHRU.
+return_statement -> RETURN expr?.
+do_statement -> DO code_block.
+code_block -> LBRACE statements? RBRACE.
+
+------------------------
+     Output grammar
+------------------------
+
+Statements -> Statements#1_Plus1.
+Statements#1_Plus1 -> Statement Statements#1_Plus2.
+Statements#1_Plus2 -> Statements#1_Plus1 | .
+
+Statement -> Declaration Statement#2_Option | Expr Statement#2_Option | Loop_statement Statement#2_Option | Branch_statement Statement#2_Option | Control_transfer_statement Statement#2_Option | Do_statement Statement#2_Option.
+Statement#2_Option ->  | semicolon.
+
+Loop_statement -> For_in_statement | While_statement | Repeat_while_statement.
+For_in_statement -> for Pattern in Expr Code_block.
+While_statement -> while Condition_list Code_block.
+
+Condition_list -> Condition Condition_list#2_Star.
+Condition_list#2_Group -> comma Condition.
+Condition_list#2_Star ->  | Condition_list#2_Group Condition_list#2_Star.
+Condition -> Expr.
+
+Repeat_while_statement -> repeat Code_block while Expr.
+Branch_statement -> If_statement | Switch_statement.
+If_statement -> if Condition_list Code_block If_statement#4_Option.
+If_statement#4_Option ->  | Else_clause.
+Else_clause -> else Felse .
+Felse -> Code_block | If_statement .
+
+Switch_statement -> switch Expr lbrace Switch_statement#4_Option rbrace.
+Switch_statement#4_Option ->  | Switch_cases.
+Switch_cases -> Switch_cases#1_Plus1.
+Switch_cases#1_Plus1 -> Switch_case Switch_cases#1_Plus2.
+Switch_cases#1_Plus2 -> Switch_cases#1_Plus1 | .
+Switch_case -> Case_label Switch_case#2_Option Statements Switch_case#4_Option | Default_label Switch_case#2_Option Statement Switch_case#4_Option.
+Switch_case#2_Option ->  | lbrace.
+Switch_case#4_Option ->  | rbrace.
+
+Case_label -> case Case_item_list column.
+Case_item_list -> Case_item Case_item_list#2_Star.
+Case_item_list#2_Star ->  | Case_item_list#2_Group Case_item_list#2_Star.
+Case_item_list#2_Group -> comma Case_item.
+Case_item -> Literal.
+Default_label -> default column.
+
+Control_transfer_statement -> Break_statement | Continue_statement | Fallthrough_statement | Return_statement.
+Break_statement -> break.
+Continue_statement -> continue.
+Fallthrough_statement -> fallthru.
+Return_statement -> return Return_statement#2_Option.
+Return_statement#2_Option ->  | Expr.
+Do_statement -> do Code_block.
+
+Code_block -> lbrace Code_block#2_Option rbrace.
+Code_block#2_Option ->  | Statements.
+
+----------------------------------------------------------------------
+     The grammr is not LL(1) but should be enough for the parser.
+----------------------------------------------------------------------

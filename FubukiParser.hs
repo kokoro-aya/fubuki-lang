@@ -175,6 +175,10 @@ literal = RealPrimary <$> realLiteral
                              <|>
                                  BoolPrimary <$> boolLiteral
 
+-----------------------------------------
+--  Parser for chained function calls  --
+-----------------------------------------
+
 ----------------------------
 --    Parser for types    --
 ----------------------------
@@ -199,7 +203,6 @@ typeIdentifier = do t <- identifier
 
 typeAnnotation = do column
                     type_
-
 
 ----------------------------
 --  Parser for patterns   --
@@ -239,7 +242,6 @@ subscriptLatter = do slice
                          pure $ Just b
                          <|> pure Nothing) -- be careful on indentation and parenthesis
 
-
 ----------------------------
 --   Switch expressions   --
 ----------------------------
@@ -261,3 +263,19 @@ defaultArm = do wildcard
                 lamArr
                 r <- expr
                 pure (Nothing, r)
+
+----------------------------
+--   Lambda expressions   --
+----------------------------
+
+-------------------------------
+--   Parser for statements   --
+-------------------------------
+
+---------------------------------
+--   Parser for declarations   --
+---------------------------------
+
+------------------------------
+--   Parser for functions   --
+------------------------------

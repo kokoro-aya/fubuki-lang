@@ -1,6 +1,6 @@
 grammar fbk;
 
-top_level: type EOF;
+top_level: declaration+ EOF;
 
 fragment DIGIT_HEAD: [1-9];
 fragment DIGIT: [0-9];
@@ -130,7 +130,7 @@ else_clause: 'else' code_block | 'else' if_statement;
 switch_statement: 'switch' expr '{' switch_cases? '}';
 switch_cases: switch_case+;
 switch_case: case_label '{'? statements '}'?
-           | default_label '{'? statement '}'?;
+           | default_label '{'? statements '}'?;
 case_label: 'case' case_item_list ':';
 case_item_list: case_item (',' case_item)*;
 case_item: literal;

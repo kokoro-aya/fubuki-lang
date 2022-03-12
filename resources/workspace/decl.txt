@@ -1,0 +1,36 @@
+------------------------
+
+Converted using ebnf2bnf.
+
+------------------------
+    Original grammar
+------------------------
+
+declaration -> constant_declaration | variable_declaration | function_declaration.
+constant_declaration -> VAL pattern_initializer_list.
+variable_declaration -> VAR pattern_initializer_list.
+pattern_initializer_list -> pattern_initializer (COMMA pattern_initializer)*.
+pattern_initializer -> simple_pattern_initializer | destruct_pattern_initializer.
+simple_pattern_initializer -> IDENTIFIER type_annotation? initializer.
+destruct_pattern_initializer -> tuple_pattern initializer.
+initializer -> ASSIGN expr.
+
+------------------------
+     Output grammar
+------------------------
+
+Declaration -> Constant_declaration | Variable_declaration | Function_declaration.
+Constant_declaration -> val Pattern_initializer_list.
+Variable_declaration -> var Pattern_initializer_list.
+Pattern_initializer_list -> Pattern_initializer Pattern_initializer_list#2_Star.
+Pattern_initializer_list#2_Star ->  | Pattern_initializer_list#2_Group Pattern_initializer_list#2_Star.
+Pattern_initializer_list#2_Group -> comma Pattern_initializer.
+Pattern_initializer -> Simple_pattern_initializer | Destruct_pattern_initializer.
+Simple_pattern_initializer -> identifier Simple_pattern_initializer#2_Option Initializer.
+Simple_pattern_initializer#2_Option ->  | Type_annotation.
+Destruct_pattern_initializer -> Tuple_pattern Initializer.
+Initializer -> assign Expr.
+
+-----------------------------
+     The grammr is LL(1)
+-----------------------------

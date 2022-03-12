@@ -215,6 +215,7 @@ matchSymbolToken ".." = SLICE
 matchSymbolToken "." = DOT
 matchSymbolToken "::" = DOUBLE_COLUMN
 matchSymbolToken ":" = COLUMN
+matchSymbolToken "?" = QMARK
 matchSymbolToken x = Oper x
 
 lexing :: String -> [Token]

@@ -1,0 +1,58 @@
+------------------------
+
+Converted using ebnf2bnf.
+
+------------------------
+    Original grammar
+------------------------
+
+function_declaration -> function_head function_name? generic_parameter_clause? function_signature function_body.
+function_head -> FN.
+function_name -> IDENTIFIER.
+function_signature -> parameter_clause function_result?.
+function_result -> type_annotation.
+function_body -> code_block | LAM_ARR expr.
+parameter_clause -> LPAREN parameter_list? RPAREN.
+parameter_list -> parameter (COMMA parameter)*.
+parameter -> default_name? parameter_name type_annotation? default_argument_clause?.
+default_name -> ULINE | IDENTIFIER.
+parameter_name -> QMARK | IDENTIFIER.
+default_argument_clause -> initializer.
+generic_parameter_clause -> GENERIC_LEFT generic_parameter_list GENERIC_RIGHT.
+generic_parameter_list -> generic_parameter (COMMA generic_parameter)*.
+generic_parameter -> IDENTIFIER.
+
+------------------------
+     Output grammar
+------------------------
+
+Function_declaration -> Function_head Function_declaration#2_Option Function_declaration#3_Option Function_signature Function_body.
+Function_declaration#2_Option ->  | Function_name.
+Function_declaration#3_Option ->  | Generic_parameter_clause.
+Function_head -> fn.
+Function_name -> identifier.
+Function_signature -> Parameter_clause Function_signature#2_Option.
+Function_signature#2_Option ->  | Function_result.
+Function_result -> Type_annotation.
+Function_body -> Code_block | lam_arr Expr.
+Parameter_clause -> lparen Parameter_clause#2_Option rparen.
+Parameter_clause#2_Option ->  | Parameter_list.
+Parameter_list -> Parameter Parameter_list#2_Star.
+Parameter_list#2_Star ->  | Parameter_list#2_Group Parameter_list#2_Star.
+Parameter_list#2_Group -> comma Parameter.
+Parameter -> Parameter#1_Option Parameter_name Parameter#3_Option Parameter#4_Option.
+Parameter#1_Option ->  | Default_name.
+Parameter#3_Option ->  | Type_annotation.
+Parameter#4_Option ->  | Default_argument_clause.
+Default_name -> uline | identifier.
+Parameter_name -> qmark | identifier.
+Default_argument_clause -> Initializer.
+Generic_parameter_clause -> generic_left Generic_parameter_list generic_right.
+Generic_parameter_list -> Generic_parameter Generic_parameter_list#2_Star.
+Generic_parameter_list#2_Star ->  | Generic_parameter_list#2_Group Generic_parameter_list#2_Star.
+Generic_parameter_list#2_Group -> comma Generic_parameter.
+Generic_parameter -> identifier.
+
+----------------------------------------------------------------------
+     The grammr is not LL(1) but should be enough for the parser.
+----------------------------------------------------------------------

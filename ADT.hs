@@ -34,3 +34,37 @@ data Subscript = SimpleSubscript Expr
                | SliceSubscript Expr Expr 
                | FromSubscript Expr 
                | ToSubscript Expr deriving (Eq)
+
+data Statement = DeclStatement Declaration
+               | ExprStatement Expr
+               | ForInStatement Pattern Expr CodeBlock
+               | WhileStatement [Expr] CodeBlock
+               | RepeatWhileStatement [Expr] CodeBlock 
+               | IfStatement IfBranch
+               | SwitchStatement Expr [SwitchCase]
+               | BreakStatement | ContinueStatement | FallthroughStatement | ReturnStatement 
+               | DoStatement CodeBlock deriving (Eq)
+
+data IfBranch = IfBranch [Expr] CodeBlock | IfElseBranch [Expr] CodeBlock IfBranch deriving (Eq)
+
+data SwitchCase = SwitchCase [Primary] CodeBlock | DefaultCase CodeBlock deriving (Eq)
+
+type CodeBlock = [Statement]
+
+data Declaration = ValDecl [PatternInitializer]
+                 | VarDecl [PatternInitializer]
+                 | NamedFuncDecl String [String] [Param] (Maybe Type) FuncBody deriving (Eq)
+
+data Param = ParamName {
+    defaultName :: Maybe Name,
+    parameterName :: Name,
+    paramType :: Maybe Type,
+    defaultArgument :: Maybe Expr
+} deriving (Eq)
+
+data FuncBody = FuncBody CodeBlock | OneLineFuncBody Expr deriving (Eq)
+
+data Name = Name String | Wildcard deriving (Eq)
+
+data PatternInitializer = SimpleInitializer String (Maybe Type) Expr
+                        | DestructInitializer Pattern Expr deriving (Eq)

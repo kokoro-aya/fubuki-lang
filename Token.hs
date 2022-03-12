@@ -32,6 +32,7 @@ data TokenType = Numeric String
             | STEP                                      -- @
             | APPEND                                    -- ++
             | DOT | COLUMN | DOUBLE_COLUMN | SLICE      -- . : :: ..
+            | QMARK                                     -- ?
 
             | ULINE                                 -- _
             | FOR | IN | IF | ELSE | WHILE | RETURN -- for, in, if, else, while, return
