@@ -4,7 +4,7 @@ import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (
 import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, genericLeft, genericRight, qmark )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, genericLeft, genericRight, qmark, dot )
 import Control.Applicative ((<|>))
 import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -143,7 +143,9 @@ subterm = do
             UnaryExpr (Op op 0) <$> factor
             <|> factor
 
-factor = primary
+factor = do p <- primary
+            (do cmi <- chainedMethodInvocation
+                pure $ ChainedMethodExpr p cmi)
 
 primary = do
             lparen
@@ -159,11 +161,17 @@ mkParenthesis xs = TupleExpr xs
 --  Parser for primaries  --
 ----------------------------
 
-subPrimary = literalPrimary <|> variablePrimary
+subPrimary = literalPrimary <|> variablePrimary <|> functionCallPrimary <|> FunctionDeclarationPrimary <$> functionDeclaration
 
 variablePrimary = VariablePrimary <$> pattern_
 
-literalPrimary = literal
+literalPrimary = literal <|> arrayLiteral
+
+arrayLiteral = do
+                lbracket
+                exprs <- sepEndBy1 expr comma
+                rbracket
+                pure $ ArrayPrimary exprs
 
 literal = RealPrimary <$> realLiteral
                  <|>
@@ -174,6 +182,19 @@ literal = RealPrimary <$> realLiteral
                              StrPrimary <$> strLiteral
                              <|>
                                  BoolPrimary <$> boolLiteral
+
+functionCallPrimary = do f <- (identifierName . tokenType) <$> identifier
+                         lparen
+                         args <- sepEndBy1 functionCallArgument comma
+                         rparen
+                         pure $ FunctionCallPrimary f args
+
+functionCallArgument = do i <- (identifierName . tokenType) <$> identifier
+                          column 
+                          e <- expr
+                          pure (Just i, e)
+
+chainedMethodInvocation = many (dot >> functionCallPrimary)
 
 -----------------------------------------
 --  Parser for chained function calls  --

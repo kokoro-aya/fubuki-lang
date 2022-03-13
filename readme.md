@@ -13,3 +13,4 @@ Current status:
 - [x] Parser to generate AST for simple expressions.
 - [x] Custom operators in AST generation.
 - [x] Type notations and patterns.
+- [x] Statements, declarations and functions.

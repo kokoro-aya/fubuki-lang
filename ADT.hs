@@ -9,6 +9,7 @@ data Expr = UnaryExpr Op Expr
           | Parenthesis Expr
           | TupleExpr [Expr]
           | SwitchExpr Expr [(Maybe Primary, Expr)]
+          | ChainedMethodExpr Expr [Primary]
           | AssignedExpr Op Pattern Expr deriving (Eq)
 
 data Primary = IntPrimary Int
@@ -17,7 +18,8 @@ data Primary = IntPrimary Int
              | StrPrimary String
              | BoolPrimary Bool
              | ArrayPrimary [Expr]
-             | FunctionCallPrimary String [Expr]
+             | FunctionCallPrimary String [(Maybe String, Expr)]
+             | FunctionDeclarationPrimary Declaration
              | VariablePrimary Pattern deriving (Eq)
 
 data Type = FunctionType [Type] Type
