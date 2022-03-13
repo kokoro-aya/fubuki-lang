@@ -9,8 +9,7 @@ data Expr = UnaryExpr Op Expr
           | Parenthesis Expr
           | TupleExpr [Expr]
           | SwitchExpr Expr [(Maybe Primary, Expr)]
-          | ChainedMethodExpr Expr [Primary]
-          | AssignedExpr Op Pattern Expr deriving (Eq)
+          | ChainedMethodExpr Expr [Primary] deriving (Eq)
 
 data Primary = IntPrimary Int
              | RealPrimary Double
@@ -39,6 +38,7 @@ data Subscript = SimpleSubscript Expr
 
 data Statement = DeclStatement Declaration
                | ExprStatement Expr
+               | AssignmentStatement Op Pattern Expr
                | ForInStatement Pattern Expr CodeBlock
                | WhileStatement [Expr] CodeBlock
                | RepeatWhileStatement [Expr] CodeBlock 

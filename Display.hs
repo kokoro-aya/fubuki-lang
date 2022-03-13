@@ -94,7 +94,6 @@ instance Display Expr where
     display (PrimaryExpr pr) = display pr
     display (Parenthesis exp) = "(" ++ display exp ++ ")"
     display (TupleExpr exps) = "(" ++ intercalate ", " (map display exps) ++ ")"
-    display (AssignedExpr op patt exp) = display patt ++ " " ++ display op ++ " " ++ display exp
 
 instance Display Primary where
     display (IntPrimary int) = show int
@@ -123,3 +122,19 @@ instance Display Subscript where
     display (SliceSubscript e1 e2) = "[" ++ display e1 ++ ".." ++ display e2 ++ "]"
     display (FromSubscript e) = "[" ++ display e ++ "..]"
     display (ToSubscript e) = "[.." ++ display e ++ "]"
+
+instance Display Statement where
+
+instance Display IfBranch where
+
+instance Display SwitchCase where
+
+instance Display Declaration where
+
+instance Display PatternInitializer where
+
+instance Display Param where
+
+instance Display FuncBody where
+
+instance Display Name where

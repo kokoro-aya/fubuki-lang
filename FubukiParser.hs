@@ -24,11 +24,7 @@ expr = do e <- exprLevel9
           (do SwitchExpr e <$> switchExpression)
             <|> pure e
 
-exprLevel9 = do
-              p <- pattern_
-              op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
-              AssignedExpr (Op op 12) p <$> exprLevel8
-              <|> exprLevel8
+exprLevel9 = exprLevel8
 
 
 exprLevel8 = leftAssociate exprLevel7 exprLevel8_1 BinaryExpr
@@ -183,16 +179,20 @@ literal = RealPrimary <$> realLiteral
                              <|>
                                  BoolPrimary <$> boolLiteral
 
-functionCallPrimary = do f <- (identifierName . tokenType) <$> identifier
+functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          lparen
                          args <- sepEndBy1 functionCallArgument comma
                          rparen
                          pure $ FunctionCallPrimary f args
 
-functionCallArgument = do i <- (identifierName . tokenType) <$> identifier
-                          column 
-                          e <- expr
-                          pure (Just i, e)
+functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
+                            do column
+                               e <- expr
+                               pure (Just i, e)
+                               <|> pure (Nothing, (PrimaryExpr . VariablePrimary) (IdentifierPattern i Nothing)))
+                               <|> do e <- expr
+                                      pure (Nothing, e)
+
 
 chainedMethodInvocation = many (dot >> functionCallPrimary)
 
@@ -299,10 +299,18 @@ statement = do  d <- endOptional declaration semicolon
                 pure $ DeclStatement d
                 <|> do  e <- endOptional expr semicolon
                         pure $ ExprStatement e
+                <|> do  s <- endOptional assignmentStatement semicolon
+                        pure s
                 <|> loopStatement
                 <|> branchStatement
-                <|> controlTransferStatement
+                <|> do c <- endOptional controlTransferStatement semicolon
+                       pure c
                 <|> doStatement
+
+assignmentStatement = do l <- pattern_
+                         op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
+                         r <- expr
+                         pure $ AssignmentStatement (Op op 12) l r
 
 loopStatement = forInStatement <|> whileStatement <|> repeatWhileStatement
 
@@ -426,7 +434,7 @@ destructPatternInitializer = do t <- tuplePattern
                                 e <- initializer
                                 pure $ DestructInitializer t e
 
-initializer = do assign 
+initializer = do assign
                  e <- expr
                  pure e
 
@@ -456,7 +464,7 @@ parameter = do  def <- option defaultParamName
                 par <- paramName
                 typ <- option typeAnnotation
                 arg <- option defaultArgumentClause
-                pure $ ParamName def par typ arg 
+                pure $ ParamName def par typ arg
 
 defaultParamName = do uline >> pure Wildcard <|> (Name . identifierName . tokenType) <$> identifier
 
@@ -466,5 +474,5 @@ defaultArgumentClause = initializer
 
 functionResult = typeAnnotation
 
-functionBody = do lamArr >> expr >>= \e -> pure $ OneLineFuncBody e 
+functionBody = do lamArr >> expr >>= \e -> pure $ OneLineFuncBody e
                 <|> FuncBody <$> codeBlock
