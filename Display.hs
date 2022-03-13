@@ -94,6 +94,8 @@ instance Display Expr where
     display (PrimaryExpr pr) = display pr
     display (Parenthesis exp) = "(" ++ display exp ++ ")"
     display (TupleExpr exps) = "(" ++ intercalate ", " (map display exps) ++ ")"
+    display (SwitchExpr e cases) = display e ++ " switch {\n" ++ intercalate "\n" (map (\(p, e) -> maybe "default" display p ++ " => " ++ display e) cases) ++ "\n}"
+    display (ChainedMethodExpr e ps) = display e ++ "." ++ intercalate "." (map display ps)
 
 instance Display Primary where
     display (IntPrimary int) = show int
@@ -102,6 +104,9 @@ instance Display Primary where
     display (StrPrimary str) = show str
     display (BoolPrimary bool) = show bool
     display (VariablePrimary var) = display var
+    display (ArrayPrimary ax) = "[" ++ intercalate ", " (map display ax) ++ "]"
+    display (FunctionCallPrimary f xs) = display f ++ "(" ++ intercalate ", " (map (\(l, e) -> display l ++ ":" ++ display e) xs) ++ ")"
+    display (FunctionDeclarationPrimary d) = display d
 
 instance Display Pattern where
     display WildcardPattern = "_"
@@ -110,9 +115,9 @@ instance Display Pattern where
     display (TuplePattern pats) = "(" ++ intercalate ", " (map display pats) ++ ")"
     display (SubscriptPattern name sx Nothing) = name ++ intercalate "" (map display sx)
     display (SubscriptPattern name sx (Just ty)) = name ++ intercalate "" (map display sx) ++ "(:" ++ display ty ++ ")"
-    
+
 instance Display Type where
-    display (FunctionType tx ty) = "(" ++ intercalate ", " (map display tx) ++ ")" ++ " -> " ++ display ty 
+    display (FunctionType tx ty) = "(" ++ intercalate ", " (map display tx) ++ ")" ++ " -> " ++ display ty
     display (ArrayType ty) = "[" ++ display ty ++ "]"
     display (TupleType ty) = "(" ++ intercalate ", " (map display ty) ++ ")"
     display (SimpleType ty) = ty
@@ -124,17 +129,50 @@ instance Display Subscript where
     display (ToSubscript e) = "[.." ++ display e ++ "]"
 
 instance Display Statement where
+    display (DeclStatement dec) = display dec
+    display (ExprStatement exp) = display exp
+    display (AssignmentStatement op p ex) = display p ++ " " ++ display op ++ " " ++ display ex
+    display (ForInStatement p e cb) = "for " ++ display p ++ " in " ++ display e ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
+    display (WhileStatement cx cb) = "while " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
+    display (RepeatWhileStatement cx cb) = "repeat {\n" ++ intercalate "\n" (map display cb) ++ "\n} while " ++ intercalate ", " (map display cx)
+    display (IfStatement ifb) = display ifb
+    display (SwitchStatement e cases) = "switch " ++ intercalate "\n" (map display cases)
+    display BreakStatement = "break"
+    display ContinueStatement = "continue"
+    display FallthroughStatement = "fallthrough"
+    display (ReturnStatement Nothing) = "return"
+    display (ReturnStatement (Just x)) = "return " ++ display x
+    display (DoStatement cb) = "do {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
 
 instance Display IfBranch where
+    display (IfBranch cx cb) = "if " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n} "
+    display (ElseBranch cb) = "else {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
+    display (IfElseBranch cx cb ifb) = "if " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n} else " ++ display ifb
 
 instance Display SwitchCase where
+    display (SwitchCase ps cb) = "case " ++ intercalate ", " (map display ps) ++ " => \n" ++ intercalate "\n" (map display cb) ++ "\n"
+    display (DefaultCase cb) = "default => \n" ++ intercalate "\n" (map display cb) ++ "\n"
 
 instance Display Declaration where
+    display (ValDecl ps) = "val " ++ intercalate ", " (map display ps)
+    display (VarDecl ps) = "var " ++ intercalate ", " (map display ps)
+    display (FuncDecl nm gr prs rt fb) =
+        "fn " ++ maybe "" display nm ++ "<" ++ intercalate ", " gr ++ ">"
+            ++ "(" ++ intercalate ", " (map display prs) ++ ") " ++ maybe " " (\x -> ": " ++ display x ++ " ") rt ++ display fb
 
 instance Display PatternInitializer where
+    display (SimpleInitializer n ty e) = display n ++ maybe "" (\x -> ": " ++ display x) ty ++ " = " ++ display e
+    display (DestructInitializer p e) = display p ++ " = " ++ display e
+
 
 instance Display Param where
+    display (ParamName nx px pt da) =
+        unwords . filter (not . null) $ [maybe "" display nx, display px, maybe "" (\x -> ": " ++ display x) pt, maybe "" display da]
 
 instance Display FuncBody where
+    display (FuncBody cb) = "{\n" ++ intercalate "\n" (map display cb) ++ "\n}"
+    display (OneLineFuncBody e) = "\n=> " ++ display e
 
 instance Display Name where
+    display (Name str) = str
+    display Wildcard = "_"
