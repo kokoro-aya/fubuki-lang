@@ -1,10 +1,10 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, genericLeft, genericRight, qmark )
 import Control.Applicative ((<|>))
 import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -320,20 +320,20 @@ elseClause = do else_
 
 switchStatement = do switch
                      e <- expr
-                     lbrace 
+                     lbrace
                      s <- some switchCase
-                     rbrace 
+                     rbrace
                      pure $ SwitchStatement e s
 
 switchCase = (do xs <- caseLabel
-                 lbrace 
+                 lbrace
                  st <- statements
-                 rbrace 
+                 rbrace
                  pure $ SwitchCase xs st)
                  <|> (do d <- defaultLabel
-                         lbrace 
+                         lbrace
                          st <- statements
-                         rbrace 
+                         rbrace
                          pure $ DefaultCase st)
                          <|> (do xs <- caseLabel
                                  st <- statements
@@ -367,7 +367,7 @@ returnStatement = do retn
                          pure $ ReturnStatement (Just e))
                         <|> pure (ReturnStatement Nothing)
 
-doStatement = do do_ 
+doStatement = do do_
                  s <- codeBlock
                  pure $ DoStatement s
 
@@ -380,6 +380,70 @@ codeBlock = do lbrace
 --   Parser for declarations   --
 ---------------------------------
 
+declaration = constantDeclaration <|> variableDeclaration <|> functionDeclaration
+
+constantDeclaration = do val
+                         xs <- some patternInitializer
+                         pure $ ValDecl xs
+
+variableDeclaration = do var
+                         xs <- some patternInitializer
+                         pure $ VarDecl xs
+
+patternInitializer = simplePatternInitializer <|> destructPatternInitializer
+
+simplePatternInitializer = do i <- identifier
+                              let i_ = identifierName . tokenType $ i in
+                                (do t <- typeAnnotation
+                                    e <- initializer
+                                    pure $ SimpleInitializer i_ (Just t) e)
+                                <|> (do assign
+                                        e <- expr
+                                        pure (SimpleInitializer i_ Nothing e))
+
+destructPatternInitializer = do t <- tuplePattern
+                                e <- initializer
+                                pure $ DestructInitializer t e
+
+initializer = do assign 
+                 e <- expr
+                 pure e
+
 ------------------------------
 --   Parser for functions   --
 ------------------------------
+
+functionDeclaration = do fn
+                         fnm <- option (identifierName . tokenType <$> identifier)
+                         gn <- orElse [] genericClause
+                         sig <- parameterClauses
+                         res <- option functionResult
+                         b <- functionBody
+                         pure $ FuncDecl fnm gn sig res b
+
+genericClause = do genericLeft
+                   xs <- sepBy1 (identifierName . tokenType <$> identifier) comma
+                   genericRight
+                   pure xs
+
+parameterClauses = do lparen
+                      ps <- sepBy1 parameter comma
+                      rparen
+                      pure ps
+
+parameter = do  def <- option defaultParamName
+                par <- paramName
+                typ <- option typeAnnotation
+                arg <- option defaultArgumentClause
+                pure $ ParamName def par typ arg 
+
+defaultParamName = do uline >> pure Wildcard <|> (Name . identifierName . tokenType) <$> identifier
+
+paramName = do qmark >> pure Wildcard <|> (Name . identifierName . tokenType) <$> identifier
+
+defaultArgumentClause = initializer
+
+functionResult = typeAnnotation
+
+functionBody = do lamArr >> expr >>= \e -> pure $ OneLineFuncBody e 
+                <|> FuncBody <$> codeBlock

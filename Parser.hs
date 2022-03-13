@@ -115,3 +115,13 @@ endOptional p sep = do x <- p
                        (do sep
                            pure x)
                             <|> pure x
+
+option :: Parser a -> Parser (Maybe a)
+option p = Just <$> p <|> pure Nothing
+
+pmap :: (a -> b) -> Parser [a] -> Parser [b]
+pmap f p = do xs <- p
+              pure $ map f xs
+
+orElse :: a -> Parser a -> Parser a
+orElse x p = p <|> pure x

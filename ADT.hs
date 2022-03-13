@@ -55,7 +55,10 @@ type CodeBlock = [Statement]
 
 data Declaration = ValDecl [PatternInitializer]
                  | VarDecl [PatternInitializer]
-                 | NamedFuncDecl String [String] [Param] (Maybe Type) FuncBody deriving (Eq)
+                 | FuncDecl (Maybe String) [String] [Param] (Maybe Type) FuncBody deriving (Eq)
+
+data PatternInitializer = SimpleInitializer String (Maybe Type) Expr
+                        | DestructInitializer Pattern Expr deriving (Eq)
 
 data Param = ParamName {
     defaultName :: Maybe Name,
@@ -67,6 +70,3 @@ data Param = ParamName {
 data FuncBody = FuncBody CodeBlock | OneLineFuncBody Expr deriving (Eq)
 
 data Name = Name String | Wildcard deriving (Eq)
-
-data PatternInitializer = SimpleInitializer String (Maybe Type) Expr
-                        | DestructInitializer Pattern Expr deriving (Eq)
