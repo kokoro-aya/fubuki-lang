@@ -136,7 +136,7 @@ tokenize (x : xs) n m r p | isSpace x = (tripleFst (tokenize xs n m r (p + 1)), 
 
 tokenize (x : xs) n m r p | isIdentHead x = (matchCharacterizedToken (x : t) r p ++ tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
-        (t, xs') = span (\x -> isIdentChar x || x `elem` "<>") xs
+        (t, xs') = span (\x -> isIdentChar x || x `elem` "<> ,") xs -- take into account spacing
 
 tokenize (x : xs) n m r p | isSymbolHead x = (Token (matchSymbolToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
@@ -167,11 +167,13 @@ matchCharacterizedToken "true" r p = [Token TRU r p]
 matchCharacterizedToken "val" r p = [Token VAL r p]
 matchCharacterizedToken "var" r p = [Token VAR r p]
 matchCharacterizedToken "while" r p = [Token WHILE r p]
-matchCharacterizedToken s r p= Token (Ident name) r p: tokenizeClause clause r (p + length name)
+matchCharacterizedToken s r p = Token (Ident name) r p: tokenizeClause clause r (p + length name)
     where (name, clause) = span isIdentChar s
           tokenizeClause "" r p = []
+          tokenizeClause (' ':xs) r p = tokenizeClause xs r (p + 1)
           tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
           tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
+          tokenizeClause (',':xs) r p = Token COMMA r p : tokenizeClause xs r (p + 1)
           -- need to specify if the first char is an ident char, otherwise it will loop
           tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
               where (ax, bx) = span isIdentChar xs

@@ -3,7 +3,12 @@ import Utils (putLine)
 import Tests.TestExpressions (testExpressionCases)
 import Tests.TestTypes (testTypeCases)
 import Tests.TestPatterns (testPatternCases)
-import FubukiParser (expr, type_, pattern_)
+import FubukiParser (expr, type_, pattern_, statement, declaration, functionDeclaration, primary)
+import Tests.TestAmbiguous (testAmbiguousCases)
+import Tests.TestDeclarations (testDeclarationCases)
+import Tests.TestFunctions (testFunctionCases)
+import Tests.TestPrimaries (testPrimariesCases)
+import Tests.TestStatements (testStatementCases)
 
 
 testSuite name p test = do
@@ -30,5 +35,30 @@ testSuite name p test = do
 
 main = do
         -- testSuite "Expressions" expr testExpressionCases
+        testSuite "Ambiguous Clauses" statement testAmbiguousCases
+
+        putStrLn ""
+
+        testSuite "Declarations" declaration testDeclarationCases
+
+        putStrLn ""
+
+        testSuite "Functions" functionDeclaration testFunctionCases
+
+        putStrLn ""
+
+        testSuite "Primaries" primary testPrimariesCases
+
+        putStrLn ""
+
+        testSuite "Statement" statement testStatementCases
+
+        putStrLn ""
+
         testSuite "Types" type_ testTypeCases
+
+        putStrLn ""
+
         testSuite "Patterns" pattern_ testPatternCases
+
+        putStrLn ""
