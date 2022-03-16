@@ -1,10 +1,10 @@
 module FubukiParser where
 
-import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
+import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType), TokenType (Ident), identifierName, operatorName)
 import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick )
 import Control.Applicative ((<|>))
 import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -13,7 +13,7 @@ import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript), IfBranch (IfB
 literalToken = satisfy "literal token expected" (isLiteral . tokenType)
 referenceToken = satisfy "reference token expected" (isReference . tokenType)
 literalOrReferenceToken = satisfy "literal or reference token expected" ((\x -> isLiteral x || isReference x) . tokenType)
-operatorToken = satisfy "literal token expected" (isOperator . tokenType)
+operatorToken = satisfy "literal token expected" (isOverridableOperator . tokenType)
 
 ----------------------------
 -- Parser for expressions --
@@ -444,11 +444,19 @@ initializer = do assign
 ------------------------------
 
 functionDeclaration = do fn
-                         fnm <- option (identifierName . tokenType <$> identifier)
+                         fnm <- option funcName
                          sig <- parameterClauses
                          res <- option functionResult
                          b <- functionBody
                          pure $ FuncDecl fnm sig res b
+
+funcName = (do  backtick 
+                n <- operatorToken 
+                backtick
+                pure . OperName . operatorName . tokenType $ n)
+            <|> (do  n <- identifier 
+                     pure . FuncName . identifierName . tokenType $ n)
+
 
 parameterClauses = do lparen
                       ps <- sepBy parameter comma

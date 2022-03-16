@@ -40,26 +40,26 @@ main = do
 
         -- putStrLn ""
 
-        testSuite "Declarations" declaration testDeclarationCases
+        -- testSuite "Declarations" declaration testDeclarationCases
 
-        putStrLn ""
+        -- putStrLn ""
 
         testSuite "Functions" functionDeclaration testFunctionCases
 
         putStrLn ""
 
-        testSuite "Primaries" primary testPrimariesCases
+        -- testSuite "Primaries" primary testPrimariesCases
 
-        putStrLn ""
+        -- putStrLn ""
 
-        testSuite "Statement" statement testStatementCases
+        -- testSuite "Statement" statement testStatementCases
 
-        putStrLn ""
+        -- putStrLn ""
 
-        testSuite "Types" type_ testTypeCases
+        -- testSuite "Types" type_ testTypeCases
 
-        putStrLn ""
+        -- putStrLn ""
 
-        testSuite "Patterns" pattern_ testPatternCases
+        -- testSuite "Patterns" pattern_ testPatternCases
 
-        putStrLn ""
+        -- putStrLn ""

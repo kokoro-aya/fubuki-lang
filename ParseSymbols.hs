@@ -1,5 +1,5 @@
 module ParseSymbols where
-import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GRT, LRT, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), isCustomOperator, matchInfix)
+import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GRT, LRT, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), matchInfix)
 import Parser (satisfy)
 
 
@@ -60,8 +60,6 @@ muleqSymbol = satisfy "expected token \"*=\"" ((== MULEQ) . tokenType)
 diveqSymbol = satisfy "expected token \"/=\"" ((== DIVEQ) . tokenType)
 
 modeqSymbol = satisfy "expected token \"%=\"" ((== MODEQ) . tokenType)
-
-customSymbol = satisfy "expected token custom operator" (isCustomOperator . tokenType)
 
 infix0 = satisfy "expected token infix operator of level 0" (matchInfix (`elem` "|$") . tokenType)
 

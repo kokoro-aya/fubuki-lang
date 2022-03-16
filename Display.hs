@@ -157,8 +157,12 @@ instance Display Declaration where
     display (ValDecl ps) = "val " ++ intercalate ", " (map display ps)
     display (VarDecl ps) = "var " ++ intercalate ", " (map display ps)
     display (FuncDecl nm prs rt fb) =
-        "fn " ++ fromMaybe "" nm
+        "fn " ++ maybe "" display nm
             ++ "(" ++ intercalate ", " (map display prs) ++ ") " ++ maybe " " (\x -> ": " ++ display x ++ " ") rt ++ display fb
+
+instance Display FuncName where
+    display (FuncName x) = x
+    display (OperName x) = x
 
 instance Display PatternInitializer where
     display (SimpleInitializer n ty e) = n ++ maybe "" (\x -> ": " ++ display x) ty ++ " = " ++ display e

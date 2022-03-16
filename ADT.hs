@@ -58,7 +58,9 @@ type CodeBlock = [Statement]
 
 data Declaration = ValDecl [PatternInitializer]
                  | VarDecl [PatternInitializer]
-                 | FuncDecl (Maybe String) [Param] (Maybe Type) FuncBody deriving (Eq, Show)
+                 | FuncDecl (Maybe FuncName) [Param] (Maybe Type) FuncBody deriving (Eq, Show)
+
+data FuncName = FuncName String | OperName String deriving (Eq, Show)
 
 data PatternInitializer = SimpleInitializer String (Maybe Type) Expr
                         | DestructInitializer Pattern Expr deriving (Eq, Show)

@@ -1,7 +1,7 @@
 module Fragments where
 
 import Parser (satisfy)
-import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident, COLUMN, LBRACKET, RBRACKET, ARROW, SLICE, CARET, SWITCH, LBRACE, RBRACE, LPAREN, RPAREN, COMMA, LAM_ARR, SEMI, FOR, IN, WHILE, REPEAT, IF, ELSE, CASE, DEFAULT, BREAK, CONTINUE, FALLTHRU, RETURN, VAL, VAR, FN, ASSIGN, DOT, DOUBLE_COLUMN, AMP, QMARK, DO), literalValue, charLiteralValue)
+import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident, COLUMN, LBRACKET, RBRACKET, ARROW, SLICE, CARET, SWITCH, LBRACE, RBRACE, LPAREN, RPAREN, COMMA, LAM_ARR, SEMI, FOR, IN, WHILE, REPEAT, IF, ELSE, CASE, DEFAULT, BREAK, CONTINUE, FALLTHRU, RETURN, VAL, VAR, FN, ASSIGN, DOT, DOUBLE_COLUMN, AMP, QMARK, DO, BACKTICK), literalValue, charLiteralValue)
 import Utils (readToInt, readToDouble)
 import Control.Applicative ((<|>))
 
@@ -116,3 +116,5 @@ var = satisfy "var token \"var\" expected" ((== VAR) . tokenType)
 fn = satisfy "fn token \"fn\" expected" ((== FN) . tokenType)
 
 do_ = satisfy "do token \"do\" expected" ((== DO) . tokenType)
+
+backtick = satisfy "backtick token \"`\" expected" ((== BACKTICK) . tokenType)

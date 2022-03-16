@@ -41,6 +41,7 @@ data TokenType = Numeric String
             | VAL | VAR | FN                        -- val, var, fn
             | REPEAT | SWITCH | CASE | DEFAULT      -- repeat, switch, case, default
             | DO | BREAK | CONTINUE | FALLTHRU      -- do, break, continue, fallthrough (:||)
+            | BACKTICK                              -- `
             deriving (Eq, Show)
 
 isLiteral :: TokenType -> Bool
@@ -54,23 +55,15 @@ isReference (Ident _) = True
 isReference ULINE = True
 isReference _ = False
 
-isOperator :: TokenType -> Bool
-isOperator tok = case tok of
+isOverridableOperator :: TokenType -> Bool
+isOverridableOperator tok = case tok of
     ADD -> True ; SUB -> True ; MUL -> True ; DIV -> True ; MOD -> True
     EQU -> True ; NEQU -> True ; GRT -> True ; LRT -> True ; GEQ -> True ; LEQ -> True
     AND -> True ; OR -> True ; XOR -> True ; NOT -> True ; CARET -> True
-    ADDEQ -> True ; SUBEQ -> True ; MULEQ -> True ; DIVEQ -> True ; MODEQ -> True
     LSHIFT -> True ; RSHIFT -> True
-    THROUGH -> True ; UNTIL -> True ; DOWNTO -> True ; DOWNTHROUGH -> True
-    STEP -> True
     APPEND -> True
-    SLICE -> True
     (Oper _) -> True
     _ -> False
-
-isCustomOperator :: TokenType -> Bool
-isCustomOperator (Oper _) = True
-isCustomOperator _ = False
 
 matchInfix :: (Char -> Bool) -> TokenType -> Bool
 matchInfix p (Oper (c:_)) = p c
@@ -92,3 +85,13 @@ charLiteralValue _ = error "internal:: charLiteralValue: not a char literal"
 identifierName :: TokenType -> String
 identifierName (Ident s) = s
 identifierName _ = error "internal:: identifierName: not an identifier"
+
+operatorName :: TokenType -> String
+operatorName op = case op of
+    ADD -> "+" ; SUB -> "-" ; MUL -> "*" ; DIV -> "/" ; MOD -> "%"
+    EQU -> "==" ; NEQU -> "!=" ; GRT -> ">" ; LRT -> "<" ; GEQ -> ">=" ; LEQ -> "<="
+    AND -> "&&" ; OR -> "||" ; XOR -> "^^" ; NOT -> "!" ; CARET -> "^"
+    LSHIFT -> "<<" ; RSHIFT -> ">>"
+    APPEND -> "++"
+    (Oper x) -> x
+    _ -> error "internal:: operatorName: not an operator"

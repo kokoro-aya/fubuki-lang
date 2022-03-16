@@ -107,6 +107,8 @@ tokenize ('}' : xs) n m r p = (Token RBRACE r p   : tripleFst (tokenize xs n m r
 tokenize (',' : xs) n m r p = (Token COMMA r p    : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize (';' : xs) n m r p = (Token SEMI r p     : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
+tokenize ('`' : xs) n m r p = (Token BACKTICK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+
 tokenize ('?' : ':' : xs) n m r p = (Token QMARK r p : Token COLUMN r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
 tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
