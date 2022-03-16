@@ -1,4 +1,4 @@
-import ParseTopLevel (testParse)
+import ParseTopLevel (testParse, testParseShow)
 import Utils (putLine)
 import Tests.TestExpressions (testExpressionCases)
 import Tests.TestTypes (testTypeCases)
@@ -23,7 +23,9 @@ testSuite name p test = do
                                                               putStrLn "Code: "
                                                               putStrLn code
                                                               putStrLn "Generated ADT: "
-                                                              print . testParse p $ code
+                                                              putStrLn . testParseShow p $ code
+                                                              putStrLn "Pretty print: "
+                                                              putStrLn . testParse p $ code
                                                               putLine
                                                               putLine
                                                               pure ()) cases
@@ -34,10 +36,9 @@ testSuite name p test = do
     putStrLn $ "-- Test " ++ name ++ " End --"
 
 main = do
-        -- testSuite "Expressions" expr testExpressionCases
-        testSuite "Ambiguous Clauses" statement testAmbiguousCases
+        -- testSuite "Ambiguous Clauses" statement testAmbiguousCases -- disabled, won't achieve
 
-        putStrLn ""
+        -- putStrLn ""
 
         testSuite "Declarations" declaration testDeclarationCases
 

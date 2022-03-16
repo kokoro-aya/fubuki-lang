@@ -1,5 +1,7 @@
 module Tests.TestAmbiguous (testAmbiguousCases) where
 
+-- This module has been abandoned in current stage.
+
 shouldCompile = zip [1..] [
     "val lesser = sort<int>(array: [1,2,3,4,5])",
     "val greater = sort<>([1,2,3,4,5], ascending: false)",

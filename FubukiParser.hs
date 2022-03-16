@@ -1,10 +1,10 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOperator, Token (tokenType), TokenType (Ident), identifierName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, genericLeft, genericRight, qmark, dot )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot )
 import Control.Applicative ((<|>))
 import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -142,6 +142,7 @@ subterm = do
 factor = do p <- primary
             (do cmi <- chainedMethodInvocation
                 pure $ ChainedMethodExpr p cmi)
+                <|> pure p
 
 primary = do
             lparen
@@ -157,7 +158,7 @@ mkParenthesis xs = TupleExpr xs
 --  Parser for primaries  --
 ----------------------------
 
-subPrimary = literalPrimary <|> variablePrimary <|> functionCallPrimary <|> FunctionDeclarationPrimary <$> functionDeclaration
+subPrimary = literalPrimary <|> functionCallPrimary <|> variablePrimary <|> FunctionDeclarationPrimary <$> functionDeclaration
 
 variablePrimary = VariablePrimary <$> pattern_
 
@@ -181,7 +182,7 @@ literal = RealPrimary <$> realLiteral
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          lparen
-                         args <- sepEndBy1 functionCallArgument comma
+                         args <- sepEndBy functionCallArgument comma
                          rparen
                          pure $ FunctionCallPrimary f args
 
@@ -194,7 +195,7 @@ functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
                                       pure (Nothing, e)
 
 
-chainedMethodInvocation = many (dot >> functionCallPrimary)
+chainedMethodInvocation = some (dot >> functionCallPrimary)
 
 -----------------------------------------
 --  Parser for chained function calls  --
@@ -297,10 +298,10 @@ statements = some statement
 
 statement = do  d <- endOptional declaration semicolon
                 pure $ DeclStatement d
-                <|> do  e <- endOptional expr semicolon
-                        pure $ ExprStatement e
                 <|> do  s <- endOptional assignmentStatement semicolon
                         pure s
+                <|> do  e <- endOptional expr semicolon
+                        pure $ ExprStatement e
                 <|> loopStatement
                 <|> branchStatement
                 <|> do c <- endOptional controlTransferStatement semicolon
@@ -343,9 +344,9 @@ ifStatement = do if_
 
 elseClause = do else_
                 (do i <- ifStatement
-                    pure i)
-                <|> (do s <- codeBlock
-                        pure $ ElseBranch s)
+                    pure i
+                    <|> (do s <- codeBlock
+                            pure $ ElseBranch s))
 
 switchStatement = do switch
                      e <- expr
@@ -412,11 +413,11 @@ codeBlock = do lbrace
 declaration = constantDeclaration <|> variableDeclaration <|> functionDeclaration
 
 constantDeclaration = do val
-                         xs <- some patternInitializer
+                         xs <- sepBy1 patternInitializer comma
                          pure $ ValDecl xs
 
 variableDeclaration = do var
-                         xs <- some patternInitializer
+                         xs <- sepBy1 patternInitializer comma
                          pure $ VarDecl xs
 
 patternInitializer = simplePatternInitializer <|> destructPatternInitializer
@@ -444,31 +445,31 @@ initializer = do assign
 
 functionDeclaration = do fn
                          fnm <- option (identifierName . tokenType <$> identifier)
-                         gn <- orElse [] genericClause
                          sig <- parameterClauses
                          res <- option functionResult
                          b <- functionBody
-                         pure $ FuncDecl fnm gn sig res b
-
-genericClause = do genericLeft
-                   xs <- sepBy1 (identifierName . tokenType <$> identifier) comma
-                   genericRight
-                   pure xs
+                         pure $ FuncDecl fnm sig res b
 
 parameterClauses = do lparen
-                      ps <- sepBy1 parameter comma
+                      ps <- sepBy parameter comma
                       rparen
                       pure ps
 
-parameter = do  def <- option defaultParamName
-                par <- paramName
-                typ <- option typeAnnotation
+parameter = do  (def, par) <- paramName
+                typ <- typeAnnotation
                 arg <- option defaultArgumentClause
                 pure $ ParamName def par typ arg
 
-defaultParamName = do uline >> pure Wildcard <|> (Name . identifierName . tokenType) <$> identifier
+-- _ x -> argument with default name ; x -> argument without name ; a x -> argument with specified name ; _ -> unnamed argument
 
-paramName = do qmark >> pure Wildcard <|> (Name . identifierName . tokenType) <$> identifier
+paramName = do  i1 <- identifier
+                (do i2 <- identifier 
+                    pure (Just . Name . identifierName . tokenType $ i1, Name . identifierName . tokenType $ i2)
+                    <|> pure (Nothing, Name . identifierName . tokenType $ i1))
+            <|> (do uline 
+                    (do x <- identifier
+                        pure (Just Wildcard, Name . identifierName . tokenType $ x)
+                        <|> pure (Nothing, Wildcard)))
 
 defaultArgumentClause = initializer
 

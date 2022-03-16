@@ -15,3 +15,6 @@ parseTopLevel = either (error . show) fst . parse topLevel . lexing
 
 testParse :: Display a => Parser a -> String -> String
 testParse p = either (\x -> "Syntax error: " ++ show x) (display . fst) . parse p . lexing
+
+testParseShow :: Show a => Parser a -> String -> String
+testParseShow p = either (\x -> "Syntax error: " ++ show x) (show . fst) . parse p . lexing

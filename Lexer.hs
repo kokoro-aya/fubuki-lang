@@ -107,6 +107,9 @@ tokenize ('}' : xs) n m r p = (Token RBRACE r p   : tripleFst (tokenize xs n m r
 tokenize (',' : xs) n m r p = (Token COMMA r p    : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize (';' : xs) n m r p = (Token SEMI r p     : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
+tokenize ('?' : ':' : xs) n m r p = (Token QMARK r p : Token COLUMN r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
+tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+
 tokenize xs@(x:_) n m r p | isDecHeadChar x = (Token (Numeric dec) r p : tripleFst (tokenize xs' n m r (p + length dec)), n, m)
     where
         (dec, xs') = span isDecChar xs
@@ -136,7 +139,7 @@ tokenize (x : xs) n m r p | isSpace x = (tripleFst (tokenize xs n m r (p + 1)), 
 
 tokenize (x : xs) n m r p | isIdentHead x = (matchCharacterizedToken (x : t) r p ++ tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
-        (t, xs') = span (\x -> isIdentChar x || x `elem` "<> ,") xs -- take into account spacing
+        (t, xs') = span (\x -> isIdentChar x || x `elem` "<>") xs -- should not take into account spacing, otherwise will span even in variable position
 
 tokenize (x : xs) n m r p | isSymbolHead x = (Token (matchSymbolToken (x : t)) r p : tripleFst (tokenize xs' n m r (p + length t + 1)), n, m)
     where
@@ -167,18 +170,23 @@ matchCharacterizedToken "true" r p = [Token TRU r p]
 matchCharacterizedToken "val" r p = [Token VAL r p]
 matchCharacterizedToken "var" r p = [Token VAR r p]
 matchCharacterizedToken "while" r p = [Token WHILE r p]
-matchCharacterizedToken s r p = Token (Ident name) r p: tokenizeClause clause r (p + length name)
-    where (name, clause) = span isIdentChar s
-          tokenizeClause "" r p = []
-          tokenizeClause (' ':xs) r p = tokenizeClause xs r (p + 1)
-          tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
-          tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
-          tokenizeClause (',':xs) r p = Token COMMA r p : tokenizeClause xs r (p + 1)
-          -- need to specify if the first char is an ident char, otherwise it will loop
-          tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
-              where (ax, bx) = span isIdentChar xs
-          tokenizeClause (x:_) _ _ = error $ "unexpected character: " ++ show x ++ " in generic clause at row " ++ show r ++ ", column " ++ show p ++ "."
-          -- Add additional parameters and change return type to reflect the modifications about generic clauses
+matchCharacterizedToken s r p = [Token (Ident s) r p]
+-- matchCharacterizedToken s r p = Token (Ident name) r p: tokenizeClause clause r (p + length name)
+--     where (name, clause) = span isIdentChar s
+--           tokenizeClause "" r p = []
+--           tokenizeClause (' ':xs) r p = tokenizeClause xs r (p + 1)
+--           tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
+--           tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
+--         --   tokenizeClause (',':xs) r p = Token COMMA r p : tokenizeClause xs r (p + 1)
+--           -- 这里利用了a<b, c>之类的语句中，左右尖括号始终粘在函数名/泛型变量后的特性，所以歪打正着的可以直接解析而不需要处理空格
+--           -- 但是相应的，如果尖括号和泛型变量之间有分隔符的话就不能够处理了
+--           -- 与此同时，类似 a>b 这样不带空格的写法也会被解析为泛型语句
+--           -- 一个可能的解决方式是彻底取消这种特殊处理而直接用左右尖括号来表达泛型语句和算术表达式
+--           -- need to specify if the first char is an ident char, otherwise it will loop
+--           tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
+--               where (ax, bx) = span isIdentChar xs
+--           tokenizeClause (x:_) _ _ = error $ "unexpected character: " ++ show x ++ " in generic clause at row " ++ show r ++ ", column " ++ show p ++ "."
+--           -- Add additional parameters and change return type to reflect the modifications about generic clauses
 
 matchSymbolToken :: String -> TokenType
 matchSymbolToken "=>" = LAM_ARR
@@ -192,8 +200,8 @@ matchSymbolToken "/" = DIV
 matchSymbolToken "%" = MOD
 matchSymbolToken "==" = EQU
 matchSymbolToken "!=" = NEQU
-matchSymbolToken "<" = LANGL
-matchSymbolToken ">" = GANGL
+matchSymbolToken "<" = LRT
+matchSymbolToken ">" = GRT
 matchSymbolToken ">=" = GEQ
 matchSymbolToken "<=" = LEQ
 matchSymbolToken "&&" = AND
@@ -218,7 +226,6 @@ matchSymbolToken ".." = SLICE
 matchSymbolToken "." = DOT
 matchSymbolToken "::" = DOUBLE_COLUMN
 matchSymbolToken ":" = COLUMN
-matchSymbolToken "?" = QMARK
 matchSymbolToken x = Oper x
 
 lexing :: String -> [Token]

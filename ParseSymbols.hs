@@ -1,5 +1,5 @@
 module ParseSymbols where
-import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GANGL, LANGL, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), isCustomOperator, matchInfix)
+import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, GRT, LRT, LEQ, GEQ, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), isCustomOperator, matchInfix)
 import Parser (satisfy)
 
 
@@ -33,11 +33,11 @@ downthroughSymbol = satisfy "expected token \">..\"" ((== DOWNTHROUGH) . tokenTy
 
 stepSymbol = satisfy "expected token \"@\"" ((== STEP) . tokenType)
 
-lesserthanSymbol = satisfy "expected token \"<\"" ((== LANGL) . tokenType)
+lesserthanSymbol = satisfy "expected token \"<\"" ((== LRT) . tokenType)
 
 leqSymbol = satisfy "expected token \"<=\"" ((== LEQ) . tokenType)
 
-greaterthanSymbol = satisfy "expected token \">\"" ((== GANGL) . tokenType)
+greaterthanSymbol = satisfy "expected token \">\"" ((== GRT) . tokenType)
 
 geqSymbol = satisfy "expected token \">=\"" ((== GEQ) . tokenType)
 

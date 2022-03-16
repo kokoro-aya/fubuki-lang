@@ -2,6 +2,8 @@ module Display where
 import ADT
 import Token
 import Data.List (intercalate)
+import Data.Maybe (fromMaybe)
+import Data.Char (toLower)
 
 class Display a where
     display :: a -> String
@@ -20,9 +22,6 @@ instance Display a => Display (Maybe a) where
     display Nothing = "Nothing"
     display (Just a) = "Just " ++ display a
 
-instance Display Char where
-    display c = [c]
-
 instance Display Token where
     display (Token t r c) = display t ++ " at: R:" ++ show r ++ ",C:" ++ show c ++ ".\n"
 
@@ -36,8 +35,6 @@ instance Display TokenType where
     display (Ident t) = t
     display TRU = "true"
     display FLS = "false"
-    display GENERIC_LEFT = "<"
-    display GENERIC_RIGHT = ">"
     display LPAREN = "("
     display RPAREN = ")"
     display LBRACKET = "["
@@ -57,8 +54,8 @@ instance Display TokenType where
     display MOD = "%"
     display EQU = "=="
     display NEQU = "!="
-    display GANGL = ">"
-    display LANGL = "<"
+    display GRT = ">"
+    display LRT = "<"
     display GEQ = ">="
     display LEQ = "<="
     display AND = "&&"
@@ -83,10 +80,13 @@ instance Display TokenType where
     display COLUMN = ":"
     display DOUBLE_COLUMN = "::"
     display ULINE = "_"
-    display _ = error "token not applicable"
+    display SLICE = ".."
+    display QMARK = "?"
+    display FALLTHRU = "fallthrough"
+    display x = map toLower $ show x
 
 instance Display Op where
-    display (Op t p) = display (tokenType t)
+    display (Op t _) = display (tokenType t)
 
 instance Display Expr where
     display (UnaryExpr op exp) = display op ++ display exp
@@ -101,11 +101,11 @@ instance Display Primary where
     display (IntPrimary int) = show int
     display (RealPrimary real) = show real
     display (CharPrimary char) = show char
-    display (StrPrimary str) = show str
+    display (StrPrimary str) = "\"" ++ str ++ "\""
     display (BoolPrimary bool) = show bool
     display (VariablePrimary var) = display var
     display (ArrayPrimary ax) = "[" ++ intercalate ", " (map display ax) ++ "]"
-    display (FunctionCallPrimary f xs) = display f ++ "(" ++ intercalate ", " (map (\(l, e) -> display l ++ ":" ++ display e) xs) ++ ")"
+    display (FunctionCallPrimary f xs) = f ++ "(" ++ intercalate ", " (map (\(l, e) -> maybe "" (++ ": ") l ++ display e) xs) ++ ")"
     display (FunctionDeclarationPrimary d) = display d
 
 instance Display Pattern where
@@ -136,7 +136,7 @@ instance Display Statement where
     display (WhileStatement cx cb) = "while " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
     display (RepeatWhileStatement cx cb) = "repeat {\n" ++ intercalate "\n" (map display cb) ++ "\n} while " ++ intercalate ", " (map display cx)
     display (IfStatement ifb) = display ifb
-    display (SwitchStatement e cases) = "switch " ++ intercalate "\n" (map display cases)
+    display (SwitchStatement e cases) = "switch " ++ display e ++ "{\n" ++ intercalate "\n" (map display cases) ++ "\n}"
     display BreakStatement = "break"
     display ContinueStatement = "continue"
     display FallthroughStatement = "fallthrough"
@@ -146,28 +146,28 @@ instance Display Statement where
 
 instance Display IfBranch where
     display (IfBranch cx cb) = "if " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n} "
-    display (ElseBranch cb) = "else {\n" ++ intercalate "\n" (map display cb) ++ "\n}"
+    display (ElseBranch cb) = "{\n" ++ intercalate "\n" (map display cb) ++ "\n}"
     display (IfElseBranch cx cb ifb) = "if " ++ intercalate ", " (map display cx) ++ " {\n" ++ intercalate "\n" (map display cb) ++ "\n} else " ++ display ifb
 
 instance Display SwitchCase where
-    display (SwitchCase ps cb) = "case " ++ intercalate ", " (map display ps) ++ " => \n" ++ intercalate "\n" (map display cb) ++ "\n"
-    display (DefaultCase cb) = "default => \n" ++ intercalate "\n" (map display cb) ++ "\n"
+    display (SwitchCase ps cb) = "case " ++ intercalate ", " (map display ps) ++ ": \n" ++ intercalate "\n" (map display cb) ++ "\n"
+    display (DefaultCase cb) = "default : \n" ++ intercalate "\n" (map display cb) ++ "\n"
 
 instance Display Declaration where
     display (ValDecl ps) = "val " ++ intercalate ", " (map display ps)
     display (VarDecl ps) = "var " ++ intercalate ", " (map display ps)
-    display (FuncDecl nm gr prs rt fb) =
-        "fn " ++ maybe "" display nm ++ "<" ++ intercalate ", " gr ++ ">"
+    display (FuncDecl nm prs rt fb) =
+        "fn " ++ fromMaybe "" nm
             ++ "(" ++ intercalate ", " (map display prs) ++ ") " ++ maybe " " (\x -> ": " ++ display x ++ " ") rt ++ display fb
 
 instance Display PatternInitializer where
-    display (SimpleInitializer n ty e) = display n ++ maybe "" (\x -> ": " ++ display x) ty ++ " = " ++ display e
+    display (SimpleInitializer n ty e) = n ++ maybe "" (\x -> ": " ++ display x) ty ++ " = " ++ display e
     display (DestructInitializer p e) = display p ++ " = " ++ display e
 
 
 instance Display Param where
     display (ParamName nx px pt da) =
-        unwords . filter (not . null) $ [maybe "" display nx, display px, maybe "" (\x -> ": " ++ display x) pt, maybe "" display da]
+        unwords . filter (not . null) $ [maybe "" display nx, display px, ": " ++ display pt, maybe "" display da]
 
 instance Display FuncBody where
     display (FuncBody cb) = "{\n" ++ intercalate "\n" (map display cb) ++ "\n}"
