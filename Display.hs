@@ -105,7 +105,8 @@ instance Display Primary where
     display (BoolPrimary bool) = show bool
     display (VariablePrimary var) = display var
     display (ArrayPrimary ax) = "[" ++ intercalate ", " (map display ax) ++ "]"
-    display (FunctionCallPrimary f xs) = f ++ "(" ++ intercalate ", " (map (\(l, e) -> maybe "" (++ ": ") l ++ display e) xs) ++ ")"
+    display (FunctionCallPrimary f gs xs) =
+            f ++ (if null gs then "" else "<" ++ intercalate ", " gs ++ ">") ++ "(" ++ intercalate ", " (map (\(l, e) -> maybe "" (++ ": ") l ++ display e) xs) ++ ")"
     display (FunctionDeclarationPrimary d) = display d
 
 instance Display Pattern where
@@ -156,8 +157,9 @@ instance Display SwitchCase where
 instance Display Declaration where
     display (ValDecl ps) = "val " ++ intercalate ", " (map display ps)
     display (VarDecl ps) = "var " ++ intercalate ", " (map display ps)
-    display (FuncDecl nm prs rt fb) =
+    display (FuncDecl nm gc prs rt fb) =
         "fn " ++ maybe "" display nm
+            ++ (if null gc then "" else "<" ++ intercalate ", " gc ++ ">")
             ++ "(" ++ intercalate ", " (map display prs) ++ ") " ++ maybe " " (\x -> ": " ++ display x ++ " ") rt ++ display fb
 
 instance Display FuncName where

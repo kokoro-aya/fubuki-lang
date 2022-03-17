@@ -4,9 +4,9 @@ import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType), 
 import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick, genericLeft, genericRight )
 import Control.Applicative ((<|>))
-import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
+import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
 import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript), IfBranch (IfBranch))
 
@@ -181,10 +181,11 @@ literal = RealPrimary <$> realLiteral
                                  BoolPrimary <$> boolLiteral
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
+                         gs <- genericClause
                          lparen
                          args <- sepEndBy functionCallArgument comma
                          rparen
-                         pure $ FunctionCallPrimary f args
+                         pure $ FunctionCallPrimary f gs args
 
 functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
                             do column
@@ -445,10 +446,11 @@ initializer = do assign
 
 functionDeclaration = do fn
                          fnm <- option funcName
+                         gc <- option genericClause
                          sig <- parameterClauses
                          res <- option functionResult
                          b <- functionBody
-                         pure $ FuncDecl fnm sig res b
+                         pure $ FuncDecl fnm (fromMaybe [] gc) sig res b
 
 funcName = (do  backtick 
                 n <- operatorToken 
@@ -456,6 +458,11 @@ funcName = (do  backtick
                 pure . OperName . operatorName . tokenType $ n)
             <|> (do  n <- identifier 
                      pure . FuncName . identifierName . tokenType $ n)
+
+genericClause = do  genericLeft 
+                    xs <- sepBy identifier comma
+                    genericRight
+                    pure $ map (identifierName . tokenType) xs
 
 
 parameterClauses = do lparen

@@ -18,7 +18,7 @@ data Primary = IntPrimary Int
              | StrPrimary String
              | BoolPrimary Bool
              | ArrayPrimary [Expr]
-             | FunctionCallPrimary String [(Maybe String, Expr)]
+             | FunctionCallPrimary String [String] [(Maybe String, Expr)]
              | FunctionDeclarationPrimary Declaration
              | VariablePrimary Pattern deriving (Eq, Show)
 
@@ -58,7 +58,7 @@ type CodeBlock = [Statement]
 
 data Declaration = ValDecl [PatternInitializer]
                  | VarDecl [PatternInitializer]
-                 | FuncDecl (Maybe FuncName) [Param] (Maybe Type) FuncBody deriving (Eq, Show)
+                 | FuncDecl (Maybe FuncName) [String] [Param] (Maybe Type) FuncBody deriving (Eq, Show)
 
 data FuncName = FuncName String | OperName String deriving (Eq, Show)
 

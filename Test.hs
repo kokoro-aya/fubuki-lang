@@ -36,9 +36,9 @@ testSuite name p test = do
     putStrLn $ "-- Test " ++ name ++ " End --"
 
 main = do
-        -- testSuite "Ambiguous Clauses" statement testAmbiguousCases -- disabled, won't achieve
+        testSuite "Ambiguous Clauses" statement testAmbiguousCases -- disabled, won't achieve
 
-        -- putStrLn ""
+        putStrLn ""
 
         -- testSuite "Declarations" declaration testDeclarationCases
 

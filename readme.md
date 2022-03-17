@@ -15,16 +15,14 @@ Current status:
     - [x] Custom operators in AST generation.
     - [x] Type notations and patterns.
     - [x] Statements, declarations and functions.
+- [x] Handle generic clauses in function declarations as well as function calls.
 - [ ] Type system
     - [ ] Simple type checking,
     - [ ] Type inference, 
     - [ ] Genericity.
 - [ ] Code generation (planned for LLVM)
 
-Tradeoff:
-
-- The generic clause in function-call expression was cancelled due to the impossibility to distinguish this clause with an arithmetic expression.
-
 Known bugs:
 
 - The error message throw out arbitrary messages that don't help to understand the error.
+- Cannot handle properly type declarations such as `tuple<int, tuple<int, int>>`, however, this won't affect our grammar as there are only basic types as well as lists and tuples.
