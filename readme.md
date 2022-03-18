@@ -16,13 +16,13 @@ Current status:
     - [x] Type notations and patterns.
     - [x] Statements, declarations and functions.
 - [x] Handle generic clauses in function declarations as well as function calls.
+- [x] Handle type annotations such as `tuple<int, tuple<int, int>>` to distinguish with `>>` symbol, however, this feature is not used in parser.
 - [ ] Type system
     - [ ] Simple type checking,
     - [ ] Type inference, 
-    - [ ] Genericity.
+    - [ ] Template genericity.
 - [ ] Code generation (planned for LLVM)
 
 Known bugs:
 
 - The error message throw out arbitrary messages that don't help to understand the error.
-- Cannot handle properly type declarations such as `tuple<int, tuple<int, int>>`, however, this won't affect our grammar as there are only basic types as well as lists and tuples.

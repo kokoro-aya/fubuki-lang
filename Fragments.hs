@@ -1,7 +1,7 @@
 module Fragments where
 
 import Parser (satisfy)
-import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident, COLUMN, LBRACKET, RBRACKET, ARROW, SLICE, CARET, SWITCH, LBRACE, RBRACE, LPAREN, RPAREN, COMMA, LAM_ARR, SEMI, FOR, IN, WHILE, REPEAT, IF, ELSE, CASE, DEFAULT, BREAK, CONTINUE, FALLTHRU, RETURN, VAL, VAR, FN, ASSIGN, DOT, DOUBLE_COLUMN, AMP, QMARK, DO, BACKTICK, LRT, LEQ, GRT, GEQ, GENERIC_LEFT, GENERIC_RIGHT), literalValue, charLiteralValue)
+import Token (Token(tokenType), TokenType (Str, Numeric, Chr, FLS, TRU, ULINE, Ident, COLUMN, LBRACKET, RBRACKET, ARROW, SLICE, CARET, SWITCH, LBRACE, RBRACE, LPAREN, RPAREN, COMMA, LAM_ARR, SEMI, FOR, IN, WHILE, REPEAT, IF, ELSE, CASE, DEFAULT, BREAK, CONTINUE, FALLTHRU, RETURN, VAL, VAR, FN, ASSIGN, DOT, DOUBLE_COLUMN, AMP, QMARK, DO, BACKTICK, LRT, LEQ, GRT, GEQ, GENERIC_LEFT, GENERIC_RIGHT, TYPE_LEFT, TYPE_RIGHT), literalValue, charLiteralValue)
 import Utils (readToInt, readToDouble)
 import Control.Applicative ((<|>))
 
@@ -130,3 +130,7 @@ geqSymbol = satisfy "expected token \">=\"" ((== GEQ) . tokenType)
 genericLeft = satisfy "expected generic token \"<\"" ((== GENERIC_LEFT) . tokenType)
 
 genericRight = satisfy "expected generic token \">\"" ((== GENERIC_RIGHT) . tokenType)
+
+typeLeft = satisfy "expected type token \"<\"" ((== TYPE_LEFT) . tokenType)
+
+typeRight = satisfy "expected type token \">\"" ((== TYPE_RIGHT) . tokenType)

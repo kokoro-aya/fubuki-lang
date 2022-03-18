@@ -30,7 +30,7 @@ isHexChar :: Char -> Bool
 isHexChar c = c `elem` "0123456789abcdefABCDEF_"
 
 isSymbolHead :: Char -> Bool
-isSymbolHead c = c `elem` "$=-&+-*/%~!|^.@:"
+isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^.@:"
 
 isSymbolChar :: Char -> Bool
 isSymbolChar c = c `elem` "$=-&+-*%<>~!|^.@:?" -- remove / to prevent clash with comments
@@ -46,7 +46,7 @@ matchUntil f b@(x:xs) = if f b
                       in (x:a', b')
 
 split :: Char -> String -> [String]
-split c xs = case break (==c) xs of 
+split c xs = case break (==c) xs of
   (ls, "") -> [ls]
   (ls, x:rs) -> ls : split c rs
 
@@ -109,30 +109,30 @@ tokenize (';' : xs) n m r p = (Token SEMI r p     : tripleFst (tokenize xs n m r
 
 tokenize ('`' : xs) n m r p = (Token BACKTICK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize ('?' : ':' : xs) n m r p = (Token QMARK r p : Token COLUMN r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
+tokenize (':' : xs) n m r p = (Token COLUMN r p : tokenize' tyc r (p + 1) ++ tripleFst (tokenize rem n m (r + newrow) (p + newpos)), n, m)
+      where (newrow, newpos) = (length rows - 1, length . last $ rows)
+            rows = split '\n' $ tyc
+            (tyc, rem) = handleTypeClause xs r (p + 1)
+            tokenize' (' ':ax) r p = tokenize' ax r p
+            tokenize' ('<':ax) r p = Token TYPE_LEFT r p : tokenize' ax r (p + 1)
+            tokenize' ('>':ax) r p = Token TYPE_RIGHT r p : tokenize' ax r (p + 1)
+            tokenize' ('[':ax) r p = Token LBRACKET r p : tokenize' ax r (p + 1)
+            tokenize' (']':ax) r p = Token RBRACKET r p : tokenize' ax r (p + 1)
+            tokenize' ('(':ax) r p = Token LPAREN r p : tokenize' ax r (p + 1)
+            tokenize' (')':ax) r p = Token RPAREN r p : tokenize' ax r (p + 1)
+            tokenize' (',':ax) r p = Token COMMA r p : tokenize' ax r (p + 1)
+            tokenize' ('-':'>':ax) r p = Token ARROW r p : tokenize' ax r (p + 2)
+            tokenize' (x:ax) r p | isIdentHead x = matchCharacterizedToken (x : t) r p ++ tokenize' ax' r (p + length t + 1)
+                where
+                    (t, ax') = span isIdentChar ax
+            tokenize' (x:_) r p = error $ "unexpected character " ++ [x] ++" in type clause, at row " ++ show r ++ ", column " ++ show p ++ "."
+            tokenize' [] r p = []
+
+
+tokenize ('?' : xs@(':':_)) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize ('<' : '<' : xs) n m r p = (Token LSHIFT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
-tokenize ('<' : '=' : xs) n m r p = (Token LEQ r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
-tokenize ('>' : '>' : xs) n m r p = (Token RSHIFT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
-tokenize ('>' : '=' : xs) n m r p = (Token GEQ r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
-
-tokenize ('<' : xs) n m r p | isEnclosed rem = let (_:ys) = rem in
-                                let (tok, n', m') = tokenize cls n m r (p + 1) in
-                                let (tok', n'', m'') = tokenize ys n' m' (r + newrow) (p + 1 + newpos) in
-                                    (Token GENERIC_LEFT r p : tok ++ [Token GENERIC_RIGHT (r + newrow) (p + newpos)] ++ tok', n'', m'')
-                            | otherwise = (Token LRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m) 
-                                  where (newrow, newpos) = (length rows - 1, length . last $ rows)
-                                        rows = split '\n' $ cls
-                                        (cls, rem) = matchUntil (isPrefixOf ">") xs
-                                        isEnclosed ('>' : '(' : _) = True
-                                        isEnclosed ('>' : ax) = beginWithLparen ax
-                                        isEnclosed _ = False
-                                        beginWithLparen (' ' : ax) = beginWithLparen ax
-                                        beginWithLparen ('(' : _) = True
-                                        beginWithLparen _ = False
-
-tokenize ('>' : xs) n m r p = (Token GRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+tokenize ('<' : xs@(x:_)) n m r p | not $ isSymbolHead x = handleGenericClause xs n m r p
 
 tokenize xs@(x:_) n m r p | isDecHeadChar x = (Token (Numeric dec) r p : tripleFst (tokenize xs' n m r (p + length dec)), n, m)
     where
@@ -169,7 +169,48 @@ tokenize (x : xs) n m r p | isSymbolHead x = (Token (matchSymbolToken (x : t)) r
     where
         (t, xs') = if x == '.' then span dotSymbolChar xs else span isSymbolChar xs
 
-tokenize xs n m r p = error $ "unrecognized token: " ++ show xs ++ ", at row " ++ show r ++ ", column " ++ show p ++ "." 
+tokenize xs n m r p = error $ "unrecognized token: " ++ show xs ++ ", at row " ++ show r ++ ", column " ++ show p ++ "."
+
+handleGenericClause :: String -> Int -> [Int] -> Int -> Int -> ([Token], Int, [Int])
+handleGenericClause xs n m r p | isEnclosed rem = let (_:ys) = rem in
+                                  let (tok, n', m') = tokenize cls n m r (p + 1) in
+                                  let (tok', n'', m'') = tokenize ys n' m' (r + newrow) (p + 1 + newpos) in
+                                      (Token GENERIC_LEFT r p : tok ++ [Token GENERIC_RIGHT (r + newrow) (p + newpos)] ++ tok', n'', m'')
+                               | otherwise = (Token LRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+                                  where (newrow, newpos) = (length rows - 1, length . last $ rows)
+                                        rows = split '\n' $ cls
+                                        (cls, rem) = matchUntil (isPrefixOf ">") xs
+                                        isEnclosed ('>' : '(' : _) = True
+                                        isEnclosed ('>' : ax) = beginWithLparen ax
+                                        isEnclosed _ = False
+                                        beginWithLparen (' ' : ax) = beginWithLparen ax
+                                        beginWithLparen ('(' : _) = True
+                                        beginWithLparen _ = False
+
+-- need to split the procedure to distinguish the case of before < (which has a balance of 0) and the case of after > (which also has a balance of 0)
+
+handleTypeClause :: String -> Int -> Int -> (String, String)
+handleTypeClause xs r p = (s ++ u, q')
+    where   (u, q') = handleTypeClauseSub q 0 r p
+            (s, q) = span (/= '<') xs
+
+handleTypeClauseSub :: String -> Int -> Int -> Int -> (String, String)
+handleTypeClauseSub _ n r p | n < 0 = error $ "negative angle bracket balance encountered, at row " ++ show r ++ ", column " ++ show p ++ "."
+handleTypeClauseSub ('\n':xs) n r p = handleTypeClauseSub xs (n - 1) (r + 1) p
+handleTypeClauseSub ('-':'>':xs) n r p = 
+        if null s then (s, '-':'>':q)
+        else ('-':'>':s, q)
+    where (s, q) = handleTypeClauseSub xs n r (p + 2)
+handleTypeClauseSub ('<':xs) n r p = ('<' : s, q)
+    where (s, q) = handleTypeClauseSub xs (n + 1) r (p + 1)
+handleTypeClauseSub ('>':xs) n r p = ('>' : s, q)
+    where (s, q) = handleTypeClauseSub xs (n - 1) r (p + 1)
+handleTypeClauseSub xs 0 r p = ("", xs)
+handleTypeClauseSub (x:xs) n r p = (x : s, q)
+    where (s, q) =  handleTypeClauseSub xs n r (p + 1)
+handleTypeClauseSub [] n r p = error $ "unexpected end of file with too few right angle brackets, at row " ++ show r ++ ", column " ++ show p ++ "."
+
+
 
 matchCharacterizedToken :: String -> Int -> Int -> [Token]
                                   -- Row of beginning of the sequence
@@ -234,6 +275,12 @@ matchSymbolToken "-=" = SUBEQ
 matchSymbolToken "*=" = MULEQ
 matchSymbolToken "/=" = DIVEQ
 matchSymbolToken "%=" = MODEQ
+matchSymbolToken "<" = LRT
+matchSymbolToken ">" = GRT
+matchSymbolToken "<=" = LEQ
+matchSymbolToken ">=" = GEQ
+matchSymbolToken "<<" = LSHIFT
+matchSymbolToken ">>" = RSHIFT
 matchSymbolToken "..." = THROUGH
 matchSymbolToken "..<" = UNTIL
 matchSymbolToken ">>." = DOWNTO
