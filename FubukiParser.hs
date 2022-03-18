@@ -1,7 +1,7 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType), TokenType (Ident), identifierName, operatorName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy, try)
 import ADT
 import Fragments
     ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick, genericLeft, genericRight )
@@ -170,15 +170,15 @@ arrayLiteral = do
                 rbracket
                 pure $ ArrayPrimary exprs
 
-literal = RealPrimary <$> realLiteral
+literal = try (RealPrimary <$> realLiteral)
                  <|>
-                     IntPrimary <$> intLiteral
+                     try (IntPrimary <$> intLiteral)
                      <|>
-                         CharPrimary <$> charLiteral
+                         try (CharPrimary <$> charLiteral)
                          <|>
-                             StrPrimary <$> strLiteral
+                             try (StrPrimary <$> strLiteral)
                              <|>
-                                 BoolPrimary <$> boolLiteral
+                                 try (BoolPrimary <$> boolLiteral)
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          gs <- genericClause
