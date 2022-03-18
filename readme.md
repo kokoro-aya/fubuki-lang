@@ -25,4 +25,10 @@ Current status:
 
 Known bugs:
 
-- The error message throw out arbitrary messages that don't help to understand the error.
+- The error message throw out arbitrary messages that don't help to understand the error. Although the parser has been changed to be non backtracking, the problem persists.
+- Cannot really handle type annotations well, currently the colon symbol `:` is only used inside type annotations and there is a walkaround for switch statement and label argument with `=>` instead of `:`.
+
+Credits:
+
+- Programming in Haskell for overall structure of parser
+- [用Haskell构建Parser Combinator（二）](https://gaufoo.com/parser2/) for the idea of non backtracking parser
