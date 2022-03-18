@@ -17,7 +17,7 @@ simplePrimaries = zip [1..] [
     "snd[1][2]",
     "_",
     "list[2..3]",
-    "collatz(n: 3)",
+    "collatz(n => 3)",
     "concat(\"hello\", \"world\")",
     "one()",
     "zip(list, [1,2,3,4,5])"]

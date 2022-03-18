@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Parser where
 
-import Token ( Token (line, pos) )
+import Token ( Token (line, pos, tokenType) )
 import Control.Applicative ( Alternative(empty, (<|>)) )
 import Data.Char (isDigit)
 import Display (display)
@@ -39,7 +39,7 @@ satisfy m f = do x <- P $ lift get
                      [] -> throwError EOFError
                      (t:ts) -> if f t then do P $ lift $ put ts
                                               return t
-                                 else throwError (MessageError m (line t, pos t))
+                                 else throwError (MessageError (m ++ ", but has " ++ (show . tokenType $ t)) (line t, pos t))
 
 try :: Parser a -> Parser a
 try p = do  s <- P $ lift get

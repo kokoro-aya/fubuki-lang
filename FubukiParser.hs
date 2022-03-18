@@ -158,7 +158,7 @@ mkParenthesis xs = TupleExpr xs
 --  Parser for primaries  --
 ----------------------------
 
-subPrimary = literalPrimary <|> functionCallPrimary <|> variablePrimary <|> FunctionDeclarationPrimary <$> functionDeclaration
+subPrimary = try literalPrimary <|> try functionCallPrimary <|> try variablePrimary <|> try (FunctionDeclarationPrimary <$> functionDeclaration)
 
 variablePrimary = VariablePrimary <$> pattern_
 
@@ -181,14 +181,14 @@ literal = try (RealPrimary <$> realLiteral)
                                  try (BoolPrimary <$> boolLiteral)
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
-                         gs <- genericClause
+                         gs <- option genericClause
                          lparen
                          args <- sepEndBy functionCallArgument comma
                          rparen
-                         pure $ FunctionCallPrimary f gs args
+                         pure $ FunctionCallPrimary f (fromMaybe [] gs) args
 
 functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
-                            do column
+                            do lamArr 
                                e <- expr
                                pure (Just i, e)
                                <|> pure (Nothing, (PrimaryExpr . VariablePrimary) (IdentifierPattern i Nothing)))
@@ -297,24 +297,24 @@ defaultArm = do uline
 
 statements = some statement
 
-statement = do  d <- endOptional declaration semicolon
-                pure $ DeclStatement d
-                <|> do  s <- endOptional assignmentStatement semicolon
-                        pure s
-                <|> do  e <- endOptional expr semicolon
-                        pure $ ExprStatement e
-                <|> loopStatement
-                <|> branchStatement
-                <|> do c <- endOptional controlTransferStatement semicolon
-                       pure c
-                <|> doStatement
+statement = do  try (do d <- endOptional declaration semicolon
+                        pure $ DeclStatement d)
+                <|> try (do  s <- endOptional assignmentStatement semicolon
+                             pure s)
+                <|> try (do  e <- endOptional expr semicolon
+                             pure $ ExprStatement e)
+                <|> try loopStatement
+                <|> try branchStatement
+                <|> try (do c <- endOptional controlTransferStatement semicolon
+                            pure c)
+                <|> try doStatement
 
 assignmentStatement = do l <- pattern_
                          op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
                          r <- expr
                          pure $ AssignmentStatement (Op op 12) l r
 
-loopStatement = forInStatement <|> whileStatement <|> repeatWhileStatement
+loopStatement = try forInStatement <|> try whileStatement <|> try repeatWhileStatement
 
 forInStatement = do for
                     v <- pattern_
@@ -334,7 +334,7 @@ repeatWhileStatement = do repeat_
                           e <- sepBy1 expr comma
                           pure $ RepeatWhileStatement e s
 
-branchStatement = (IfStatement <$> ifStatement) <|> switchStatement
+branchStatement = try (IfStatement <$> ifStatement) <|> try switchStatement
 
 ifStatement = do if_
                  c <- sepBy1 expr comma
@@ -356,30 +356,30 @@ switchStatement = do switch
                      rbrace
                      pure $ SwitchStatement e s
 
-switchCase = (do xs <- caseLabel
-                 lbrace
-                 st <- statements
-                 rbrace
-                 pure $ SwitchCase xs st)
-                 <|> (do d <- defaultLabel
-                         lbrace
-                         st <- statements
-                         rbrace
-                         pure $ DefaultCase st)
-                         <|> (do xs <- caseLabel
-                                 st <- statements
-                                 pure $ SwitchCase xs st)
-                                 <|> (do d <- defaultLabel
-                                         st <- statements
-                                         pure $ DefaultCase st)
+switchCase = try (do xs <- caseLabel
+                     lbrace
+                     st <- statements
+                     rbrace
+                     pure $ SwitchCase xs st)
+                 <|> try (do d <- defaultLabel
+                             lbrace
+                             st <- statements
+                             rbrace
+                             pure $ DefaultCase st)
+                         <|> try (do xs <- caseLabel
+                                     st <- statements
+                                     pure $ SwitchCase xs st)
+                                     <|> try (do d <- defaultLabel
+                                                 st <- statements
+                                                 pure $ DefaultCase st)
 
 caseLabel = do  case_
                 xs <-sepBy1 literal comma
-                column
+                lamArr 
                 pure xs
 
 defaultLabel = do default_
-                  column
+                  lamArr
                   pure ()
 
 controlTransferStatement = breakStatement <|> continueStatement <|> returnStatement <|> fallthroughStatement

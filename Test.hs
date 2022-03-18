@@ -36,17 +36,17 @@ testSuite name p test = do
     putStrLn $ "-- Test " ++ name ++ " End --"
 
 main = do
-        testSuite "Ambiguous Clauses" statement testAmbiguousCases -- disabled, won't achieve
+        -- testSuite "Ambiguous Clauses" statement testAmbiguousCases
 
-        putStrLn ""
+        -- putStrLn ""
 
         -- testSuite "Declarations" declaration testDeclarationCases
 
         -- putStrLn ""
 
-        testSuite "Functions" functionDeclaration testFunctionCases
+        -- testSuite "Functions" functionDeclaration testFunctionCases
 
-        putStrLn ""
+        -- putStrLn ""
 
         -- testSuite "Primaries" primary testPrimariesCases
 
@@ -56,10 +56,10 @@ main = do
 
         -- putStrLn ""
 
-        -- testSuite "Types" type_ testTypeCases
+        testSuite "Types" type_ testTypeCases
 
-        -- putStrLn ""
+        putStrLn ""
 
-        -- testSuite "Patterns" pattern_ testPatternCases
+        testSuite "Patterns" pattern_ testPatternCases
 
-        -- putStrLn ""
+        putStrLn ""

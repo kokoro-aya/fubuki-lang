@@ -114,6 +114,7 @@ tokenize (':' : xs) n m r p = (Token COLUMN r p : tokenize' tyc r (p + 1) ++ tri
             rows = split '\n' $ tyc
             (tyc, rem) = handleTypeClause xs r (p + 1)
             tokenize' (' ':ax) r p = tokenize' ax r p
+            tokenize' ('\n':ax) r p = tokenize' ax (r + 1) posBegin
             tokenize' ('<':ax) r p = Token TYPE_LEFT r p : tokenize' ax r (p + 1)
             tokenize' ('>':ax) r p = Token TYPE_RIGHT r p : tokenize' ax r (p + 1)
             tokenize' ('[':ax) r p = Token LBRACKET r p : tokenize' ax r (p + 1)
@@ -131,6 +132,8 @@ tokenize (':' : xs) n m r p = (Token COLUMN r p : tokenize' tyc r (p + 1) ++ tri
 
 tokenize ('?' : xs@(':':_)) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+
+tokenize ('<' : '>' : xs) n m r p = (Token GENERIC_LEFT r p : Token GENERIC_RIGHT r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
 
 tokenize ('<' : xs@(x:_)) n m r p | not $ isSymbolHead x = handleGenericClause xs n m r p
 
@@ -192,7 +195,7 @@ handleGenericClause xs n m r p | isEnclosed rem = let (_:ys) = rem in
 handleTypeClause :: String -> Int -> Int -> (String, String)
 handleTypeClause xs r p = (s ++ u, q')
     where   (u, q') = handleTypeClauseSub q 0 r p
-            (s, q) = span (/= '<') xs
+            (s, q) = span (`notElem` "<=,{)") xs
 
 handleTypeClauseSub :: String -> Int -> Int -> Int -> (String, String)
 handleTypeClauseSub _ n r p | n < 0 = error $ "negative angle bracket balance encountered, at row " ++ show r ++ ", column " ++ show p ++ "."
