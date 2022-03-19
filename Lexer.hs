@@ -30,7 +30,7 @@ isHexChar :: Char -> Bool
 isHexChar c = c `elem` "0123456789abcdefABCDEF_"
 
 isSymbolHead :: Char -> Bool
-isSymbolHead c = c `elem` "$=-&+-*/%<>~!|^.@:"
+isSymbolHead c = c `elem` "$=-&+-*/%<~!|^.@:"
 
 isSymbolChar :: Char -> Bool
 isSymbolChar c = c `elem` "$=-&+-*%<>~!|^.@:?" -- remove / to prevent clash with comments
@@ -109,29 +109,13 @@ tokenize (';' : xs) n m r p = (Token SEMI r p     : tripleFst (tokenize xs n m r
 
 tokenize ('`' : xs) n m r p = (Token BACKTICK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize (':' : xs) n m r p = (Token COLUMN r p : tokenize' tyc r (p + 1) ++ tripleFst (tokenize rem n m (r + newrow) (p + newpos)), n, m)
-      where (newrow, newpos) = (length rows - 1, length . last $ rows)
-            rows = split '\n' $ tyc
-            (tyc, rem) = handleTypeClause xs r (p + 1)
-            tokenize' (' ':ax) r p = tokenize' ax r p
-            tokenize' ('\n':ax) r p = tokenize' ax (r + 1) posBegin
-            tokenize' ('<':ax) r p = Token TYPE_LEFT r p : tokenize' ax r (p + 1)
-            tokenize' ('>':ax) r p = Token TYPE_RIGHT r p : tokenize' ax r (p + 1)
-            tokenize' ('[':ax) r p = Token LBRACKET r p : tokenize' ax r (p + 1)
-            tokenize' (']':ax) r p = Token RBRACKET r p : tokenize' ax r (p + 1)
-            tokenize' ('(':ax) r p = Token LPAREN r p : tokenize' ax r (p + 1)
-            tokenize' (')':ax) r p = Token RPAREN r p : tokenize' ax r (p + 1)
-            tokenize' (',':ax) r p = Token COMMA r p : tokenize' ax r (p + 1)
-            tokenize' ('-':'>':ax) r p = Token ARROW r p : tokenize' ax r (p + 2)
-            tokenize' (x:ax) r p | isIdentHead x = matchCharacterizedToken (x : t) r p ++ tokenize' ax' r (p + length t + 1)
-                where
-                    (t, ax') = span isIdentChar ax
-            tokenize' (x:_) r p = error $ "unexpected character " ++ [x] ++" in type clause, at row " ++ show r ++ ", column " ++ show p ++ "."
-            tokenize' [] r p = []
-
+tokenize (':' : xs) n m r p = (Token COLUMN r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
 tokenize ('?' : xs@(':':_)) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
+
+tokenize ('>' : '=' : xs) n m r p = (Token GEQ r p : tripleFst (tokenize xs n m r (p + 2)), n, m)
+tokenize ('>' : xs) n m r p = (Token GRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
 tokenize ('<' : '>' : xs) n m r p = (Token GENERIC_LEFT r p : Token GENERIC_RIGHT r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
 
@@ -190,31 +174,6 @@ handleGenericClause xs n m r p | isEnclosed rem = let (_:ys) = rem in
                                         beginWithLparen ('(' : _) = True
                                         beginWithLparen _ = False
 
--- need to split the procedure to distinguish the case of before < (which has a balance of 0) and the case of after > (which also has a balance of 0)
-
-handleTypeClause :: String -> Int -> Int -> (String, String)
-handleTypeClause xs r p = (s ++ u, q')
-    where   (u, q') = handleTypeClauseSub q 0 r p
-            (s, q) = span (`notElem` "<=,{)") xs
-
-handleTypeClauseSub :: String -> Int -> Int -> Int -> (String, String)
-handleTypeClauseSub _ n r p | n < 0 = error $ "negative angle bracket balance encountered, at row " ++ show r ++ ", column " ++ show p ++ "."
-handleTypeClauseSub ('\n':xs) n r p = handleTypeClauseSub xs (n - 1) (r + 1) p
-handleTypeClauseSub ('-':'>':xs) n r p = 
-        if null s then (s, '-':'>':q)
-        else ('-':'>':s, q)
-    where (s, q) = handleTypeClauseSub xs n r (p + 2)
-handleTypeClauseSub ('<':xs) n r p = ('<' : s, q)
-    where (s, q) = handleTypeClauseSub xs (n + 1) r (p + 1)
-handleTypeClauseSub ('>':xs) n r p = ('>' : s, q)
-    where (s, q) = handleTypeClauseSub xs (n - 1) r (p + 1)
-handleTypeClauseSub xs 0 r p = ("", xs)
-handleTypeClauseSub (x:xs) n r p = (x : s, q)
-    where (s, q) =  handleTypeClauseSub xs n r (p + 1)
-handleTypeClauseSub [] n r p = error $ "unexpected end of file with too few right angle brackets, at row " ++ show r ++ ", column " ++ show p ++ "."
-
-
-
 matchCharacterizedToken :: String -> Int -> Int -> [Token]
                                   -- Row of beginning of the sequence
                                          -- Position of beginning of the sequence
@@ -239,22 +198,6 @@ matchCharacterizedToken "val" r p = [Token VAL r p]
 matchCharacterizedToken "var" r p = [Token VAR r p]
 matchCharacterizedToken "while" r p = [Token WHILE r p]
 matchCharacterizedToken s r p = [Token (Ident s) r p]
--- matchCharacterizedToken s r p = Token (Ident name) r p: tokenizeClause clause r (p + length name)
---     where (name, clause) = span isIdentChar s
---           tokenizeClause "" r p = []
---           tokenizeClause (' ':xs) r p = tokenizeClause xs r (p + 1)
---           tokenizeClause ('<':xs) r p = Token GENERIC_LEFT r p : tokenizeClause xs r (p + 1)
---           tokenizeClause ('>':xs) r p = Token GENERIC_RIGHT r p : tokenizeClause xs r (p + 1)
---         --   tokenizeClause (',':xs) r p = Token COMMA r p : tokenizeClause xs r (p + 1)
---           -- 这里利用了a<b, c>之类的语句中，左右尖括号始终粘在函数名/泛型变量后的特性，所以歪打正着的可以直接解析而不需要处理空格
---           -- 但是相应的，如果尖括号和泛型变量之间有分隔符的话就不能够处理了
---           -- 与此同时，类似 a>b 这样不带空格的写法也会被解析为泛型语句
---           -- 一个可能的解决方式是彻底取消这种特殊处理而直接用左右尖括号来表达泛型语句和算术表达式
---           -- need to specify if the first char is an ident char, otherwise it will loop
---           tokenizeClause xs@(x:_) r p | isIdentChar x = Token (Ident ax) r p : tokenizeClause bx r (p + length ax)
---               where (ax, bx) = span isIdentChar xs
---           tokenizeClause (x:_) _ _ = error $ "unexpected character: " ++ show x ++ " in generic clause at row " ++ show r ++ ", column " ++ show p ++ "."
---           -- Add additional parameters and change return type to reflect the modifications about generic clauses
 
 matchSymbolToken :: String -> TokenType
 matchSymbolToken "=>" = LAM_ARR
@@ -279,11 +222,9 @@ matchSymbolToken "*=" = MULEQ
 matchSymbolToken "/=" = DIVEQ
 matchSymbolToken "%=" = MODEQ
 matchSymbolToken "<" = LRT
-matchSymbolToken ">" = GRT
 matchSymbolToken "<=" = LEQ
 matchSymbolToken ">=" = GEQ
 matchSymbolToken "<<" = LSHIFT
-matchSymbolToken ">>" = RSHIFT
 matchSymbolToken "..." = THROUGH
 matchSymbolToken "..<" = UNTIL
 matchSymbolToken ">>." = DOWNTO

@@ -1,12 +1,12 @@
 module FubukiParser where
 
-import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType), TokenType (Ident), identifierName, operatorName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy, try)
+import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType, line, pos, Token), TokenType (Ident, RSHIFT), identifierName, operatorName)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
 import ADT
 import Fragments
     ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick, genericLeft, genericRight )
 import Control.Applicative ((<|>))
-import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, rshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
+import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
 import ADT (Subscript(SliceSubscript, FromSubscript, ToSubscript), IfBranch (IfBranch))
 
@@ -102,7 +102,10 @@ exprLevel2_1 = do op <- appendSymbol
 exprLevel1 = leftAssociate exprLevel0 exprLevel1_1 BinaryExpr
 
 
-exprLevel1_1 = do op <- lshiftSymbol <|> rshiftSymbol
+exprLevel1_1 = do op <- lshiftSymbol <|> (do a <- greaterthanSymbol 
+                                             greaterthanSymbol
+                                             let (l, p) = (line a, pos a) in
+                                                pure $ Token RSHIFT l p)
                   ex <- exprLevel0
                   tm1 <- exprLevel1_1
                   pure ((Op op 4, ex):tm1)
@@ -158,7 +161,7 @@ mkParenthesis xs = TupleExpr xs
 --  Parser for primaries  --
 ----------------------------
 
-subPrimary = try literalPrimary <|> try functionCallPrimary <|> try variablePrimary <|> try (FunctionDeclarationPrimary <$> functionDeclaration)
+subPrimary = literalPrimary <|> functionCallPrimary <|> variablePrimary <|> (FunctionDeclarationPrimary <$> functionDeclaration)
 
 variablePrimary = VariablePrimary <$> pattern_
 
@@ -170,15 +173,15 @@ arrayLiteral = do
                 rbracket
                 pure $ ArrayPrimary exprs
 
-literal = try (RealPrimary <$> realLiteral)
+literal = (RealPrimary <$> realLiteral)
                  <|>
-                     try (IntPrimary <$> intLiteral)
+                     (IntPrimary <$> intLiteral)
                      <|>
-                         try (CharPrimary <$> charLiteral)
+                         (CharPrimary <$> charLiteral)
                          <|>
-                             try (StrPrimary <$> strLiteral)
+                             (StrPrimary <$> strLiteral)
                              <|>
-                                 try (BoolPrimary <$> boolLiteral)
+                                 (BoolPrimary <$> boolLiteral)
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          gs <- option genericClause
@@ -188,7 +191,7 @@ functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          pure $ FunctionCallPrimary f (fromMaybe [] gs) args
 
 functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
-                            do lamArr 
+                            do column 
                                e <- expr
                                pure (Just i, e)
                                <|> pure (Nothing, (PrimaryExpr . VariablePrimary) (IdentifierPattern i Nothing)))
@@ -278,12 +281,12 @@ switchExpression = do switch
 switchExprArm = do literalArm <|> defaultArm
 
 literalArm = do l <- literal
-                lamArr
+                lamArr 
                 r <- expr
                 pure (Just l, r)
 
 defaultArm = do uline
-                lamArr
+                lamArr 
                 r <- expr
                 pure (Nothing, r)
 
@@ -297,24 +300,24 @@ defaultArm = do uline
 
 statements = some statement
 
-statement = do  try (do d <- endOptional declaration semicolon
-                        pure $ DeclStatement d)
-                <|> try (do  s <- endOptional assignmentStatement semicolon
-                             pure s)
-                <|> try (do  e <- endOptional expr semicolon
-                             pure $ ExprStatement e)
-                <|> try loopStatement
-                <|> try branchStatement
-                <|> try (do c <- endOptional controlTransferStatement semicolon
-                            pure c)
-                <|> try doStatement
+statement = do  (do d <- endOptional declaration semicolon
+                    pure $ DeclStatement d)
+                <|> (do s <- endOptional assignmentStatement semicolon
+                        pure s)
+                <|> (do e <- endOptional expr semicolon
+                        pure $ ExprStatement e)
+                <|> loopStatement
+                <|> branchStatement
+                <|> (do c <- endOptional controlTransferStatement semicolon
+                        pure c)
+                <|> doStatement
 
 assignmentStatement = do l <- pattern_
                          op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
                          r <- expr
                          pure $ AssignmentStatement (Op op 12) l r
 
-loopStatement = try forInStatement <|> try whileStatement <|> try repeatWhileStatement
+loopStatement = forInStatement <|> whileStatement <|> repeatWhileStatement
 
 forInStatement = do for
                     v <- pattern_
@@ -324,7 +327,7 @@ forInStatement = do for
                     pure $ ForInStatement v e s
 
 whileStatement = do while
-                    e <- sepBy1 expr comma
+                    e <- sepBy expr comma
                     s <- codeBlock
                     pure $ WhileStatement e s
 
@@ -334,7 +337,7 @@ repeatWhileStatement = do repeat_
                           e <- sepBy1 expr comma
                           pure $ RepeatWhileStatement e s
 
-branchStatement = try (IfStatement <$> ifStatement) <|> try switchStatement
+branchStatement = (IfStatement <$> ifStatement) <|> switchStatement
 
 ifStatement = do if_
                  c <- sepBy1 expr comma
@@ -356,30 +359,30 @@ switchStatement = do switch
                      rbrace
                      pure $ SwitchStatement e s
 
-switchCase = try (do xs <- caseLabel
-                     lbrace
-                     st <- statements
-                     rbrace
-                     pure $ SwitchCase xs st)
-                 <|> try (do d <- defaultLabel
-                             lbrace
-                             st <- statements
-                             rbrace
-                             pure $ DefaultCase st)
-                         <|> try (do xs <- caseLabel
-                                     st <- statements
-                                     pure $ SwitchCase xs st)
-                                     <|> try (do d <- defaultLabel
-                                                 st <- statements
-                                                 pure $ DefaultCase st)
+switchCase = (do xs <- caseLabel
+                 lbrace
+                 st <- statements
+                 rbrace
+                 pure $ SwitchCase xs st)
+                 <|> (do d <- defaultLabel
+                         lbrace
+                         st <- statements
+                         rbrace
+                         pure $ DefaultCase st)
+                         <|> (do xs <- caseLabel
+                                 st <- statements
+                                 pure $ SwitchCase xs st)
+                                     <|> (do d <- defaultLabel
+                                             st <- statements
+                                             pure $ DefaultCase st)
 
 caseLabel = do  case_
                 xs <-sepBy1 literal comma
-                lamArr 
+                column 
                 pure xs
 
 defaultLabel = do default_
-                  lamArr
+                  column
                   pure ()
 
 controlTransferStatement = breakStatement <|> continueStatement <|> returnStatement <|> fallthroughStatement

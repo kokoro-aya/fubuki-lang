@@ -48,6 +48,10 @@ main = do
 
         -- putStrLn ""
 
+        testSuite "Expressions" expr testExpressionCases
+
+        putStrLn ""
+
         -- testSuite "Primaries" primary testPrimariesCases
 
         -- putStrLn ""
@@ -56,10 +60,10 @@ main = do
 
         -- putStrLn ""
 
-        testSuite "Types" type_ testTypeCases
+        -- testSuite "Types" type_ testTypeCases
 
-        putStrLn ""
+        -- putStrLn ""
 
-        testSuite "Patterns" pattern_ testPatternCases
+        -- testSuite "Patterns" pattern_ testPatternCases
 
-        putStrLn ""
+        -- putStrLn ""

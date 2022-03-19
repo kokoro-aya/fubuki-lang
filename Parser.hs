@@ -5,45 +5,51 @@ import Token ( Token (line, pos, tokenType) )
 import Control.Applicative ( Alternative(empty, (<|>)) )
 import Data.Char (isDigit)
 import Display (display)
-import Control.Monad.Except
-import Control.Monad.State
-    ( StateT(StateT), MonadState(get, put), State, runState )
 
-type Pos = (Int, Int)
-
-data ParseError = DefaultError String | EOFError | MessageError String Pos
-
-instance Show ParseError where
-    show (DefaultError s) = "error: " ++ s ++ "."
-    show EOFError = "error: unexpected end of file."
-    show (MessageError s p) = "error: " ++ s ++ ", at around position L" 
-        ++ (show . fst $ p) ++ ":" ++ (show . snd $ p) ++ "."
-
-newtype Parser a = P {
-        runParser :: ExceptT ParseError (State [Token]) a
-    } deriving (Functor, Applicative, Monad, MonadError ParseError)
-
-instance Alternative Parser where
-    empty = throwError (DefaultError "something happened in the parser")
-    p1 <|> p2 = p1 `catchError` const p2
+newtype Parser a = P ([Token] -> Either String (a, [Token]))
 
 parse :: Parser a -> [Token] -> Either String (a, [Token])
-parse p tok = case (runState . runExceptT . runParser) p tok of
-    (Left err, _) -> Left $ show err
-    (Right val, rest) -> Right (val, rest)
+parse (P p) = p
+
+instance Functor Parser where
+    fmap g (P p) = P (\s -> case p s of
+                                Left s' -> Left s'
+                                Right (a, s') -> Right (g a, s'))
+
+instance Applicative Parser where
+    pure a = P (\s -> Right (a, s))
+    pg <*> px = P (\s -> case parse pg s of
+                            Left s' -> Left s'
+                            Right (g, s') -> parse (fmap g px) s')
+
+instance Monad Parser where
+    p >>= f = P (\s -> case parse p s of
+                            Left s' -> Left s'
+                            Right (a, s') -> parse (f a) s')
+
+instance Alternative Parser where
+    empty = P (\s -> Left "")
+    p <|> q = P (\s -> case parse p s of
+                            Left s' -> parse q s
+                            Right (a, s') -> Right (a, s'))
+
+item :: Parser Token
+item = P (\s -> case s of
+                    [] -> Left "Unexpected end of input"
+                    (t:ts) -> Right (t, ts))
+
+eof :: Parser ()
+eof = P (\s -> case s of
+                    [] -> Right ((), [])
+                    xs -> Left $ "Expected end of input, but there are unconsumed tokens " ++ show xs)
 
 satisfy :: String -> (Token -> Bool) -> Parser Token
         -- Error message
-satisfy m f = do x <- P $ lift get
-                 case x of 
-                     [] -> throwError EOFError
-                     (t:ts) -> if f t then do P $ lift $ put ts
-                                              return t
-                                 else throwError (MessageError (m ++ ", but has " ++ (show . tokenType $ t)) (line t, pos t))
+satisfy m f = do t <- item
+                 if f t then pure t else
+                    let (r, p) = (line t, pos t) in
+                        P (\_ -> Left $ "Error around " ++ show r ++ ":" ++ show p ++ ", " ++ m ++ ", but has " ++ display t ++ ".")
 
-try :: Parser a -> Parser a
-try p = do  s <- P $ lift get
-            p `catchError` (\e -> P $ lift (put s) >> throwError e)
 
 choice :: [Parser a] -> Parser a
 choice = foldr (<|>) empty

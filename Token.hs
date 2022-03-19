@@ -18,7 +18,6 @@ data TokenType = Numeric String
             | Ident String
             | TRU | FLS
             | GENERIC_LEFT | GENERIC_RIGHT              -- < > in generic clause
-            | TYPE_LEFT | TYPE_RIGHT                    -- < > in type clause
             | LPAREN | RPAREN                           -- ( )
             | LBRACKET | RBRACKET                       -- [ ]
             | LBRACE | RBRACE                           -- { }

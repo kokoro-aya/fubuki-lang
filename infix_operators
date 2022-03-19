@@ -5,7 +5,7 @@ The first char : description
 &              : infix 1, left
 ^ @            : infix 2, right (except for ^)
 =              : infix 3, left
-< >            : infix 4, left
+<              : infix 4, left
 + -            : infix 5, left (except for ++)
 * / %          : infix 6, left
 ! ~            : prefix 7

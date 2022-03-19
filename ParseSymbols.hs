@@ -19,8 +19,6 @@ caretSymbol = satisfy "expected token \"^\"" ((== CARET) . tokenType)
 
 lshiftSymbol = satisfy "expected token \"<<\"" ((== LSHIFT) . tokenType)
 
-rshiftSymbol = satisfy "expected token \">>\"" ((== RSHIFT) . tokenType)
-
 appendSymbol = satisfy "expected token \"++\"" ((== APPEND) . tokenType)
 
 untilSymbol = satisfy "expected token \"..<\"" ((== UNTIL) . tokenType)

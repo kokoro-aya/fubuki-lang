@@ -3,12 +3,12 @@ module ParseTopLevel where
 import ADT (Expr)
 import FubukiParser (expr)
 import Lexer (lexing)
-import Parser (parse, Parser)
+import Parser (parse, Parser, eof)
 import Display (display, Display)
 
 type TopLevel = Expr
 
-topLevel = expr
+topLevel = expr <* eof
 
 parseTopLevel :: String -> Expr
 parseTopLevel = either (error . show) fst . parse topLevel . lexing
