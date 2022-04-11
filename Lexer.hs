@@ -109,17 +109,19 @@ tokenize (';' : xs) n m r p = (Token SEMI r p     : tripleFst (tokenize xs n m r
 
 tokenize ('`' : xs) n m r p = (Token BACKTICK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
+tokenize (':' : ':' : xs) n m r p = (Token DOUBLE_COLUMN  r p : tripleFst (tokenize xs n m r (p + 2)), n, m)
 tokenize (':' : xs) n m r p = (Token COLUMN r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
 tokenize ('?' : xs@(':':_)) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 tokenize ('?' : xs) n m r p = (Token QMARK r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
 tokenize ('>' : '=' : xs) n m r p = (Token GEQ r p : tripleFst (tokenize xs n m r (p + 2)), n, m)
+tokenize ('>' : '>' : '.' : xs) n m r p = (Token DOWNTO r p : tripleFst (tokenize xs n m r (p + 3)), n, m)
+tokenize ('>' : '.' : '.' : xs) n m r p = (Token DOWNTHROUGH r p : tripleFst (tokenize xs n m r (p + 3)), n, m)
+tokenize ('>' : '>' : xs) n m r p = (Token RSHIFT r p : tripleFst (tokenize xs n m r (p + 2)), n, m)
 tokenize ('>' : xs) n m r p = (Token GRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize ('<' : '>' : xs) n m r p = (Token GENERIC_LEFT r p : Token GENERIC_RIGHT r (p + 1) : tripleFst (tokenize xs n m r (p + 2)), n, m)
-
-tokenize ('<' : xs@(x:_)) n m r p | not $ isSymbolHead x = handleGenericClause xs n m r p
+tokenize ('<' : xs@(x:_)) n m r p | not $ isSymbolChar x = handleGenericClause xs n m r p
 
 tokenize xs@(x:_) n m r p | isDecHeadChar x = (Token (Numeric dec) r p : tripleFst (tokenize xs' n m r (p + length dec)), n, m)
     where
@@ -223,18 +225,13 @@ matchSymbolToken "/=" = DIVEQ
 matchSymbolToken "%=" = MODEQ
 matchSymbolToken "<" = LRT
 matchSymbolToken "<=" = LEQ
-matchSymbolToken ">=" = GEQ
 matchSymbolToken "<<" = LSHIFT
 matchSymbolToken "..." = THROUGH
 matchSymbolToken "..<" = UNTIL
-matchSymbolToken ">>." = DOWNTO
-matchSymbolToken ">.." = DOWNTHROUGH
 matchSymbolToken "@" = STEP
 matchSymbolToken "++" = APPEND
 matchSymbolToken ".." = SLICE
 matchSymbolToken "." = DOT
-matchSymbolToken "::" = DOUBLE_COLUMN
-matchSymbolToken ":" = COLUMN
 matchSymbolToken x = Oper x
 
 lexing :: String -> [Token]
