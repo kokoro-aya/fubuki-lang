@@ -121,7 +121,7 @@ tokenize ('>' : '.' : '.' : xs) n m r p = (Token DOWNTHROUGH r p : tripleFst (to
 tokenize ('>' : '>' : xs) n m r p = (Token RSHIFT r p : tripleFst (tokenize xs n m r (p + 2)), n, m)
 tokenize ('>' : xs) n m r p = (Token GRT r p : tripleFst (tokenize xs n m r (p + 1)), n, m)
 
-tokenize ('<' : xs@(x:_)) n m r p | not $ isSymbolChar x = handleGenericClause xs n m r p
+tokenize ('<' : xs@(x:_)) n m r p | x == '>' || not (isSymbolChar x) = handleGenericClause xs n m r p
 
 tokenize xs@(x:_) n m r p | isDecHeadChar x = (Token (Numeric dec) r p : tripleFst (tokenize xs' n m r (p + length dec)), n, m)
     where
