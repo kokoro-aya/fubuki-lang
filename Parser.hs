@@ -1,4 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Parser where
 
 import Token ( Token (line, pos, tokenType) )
@@ -6,49 +5,49 @@ import Control.Applicative ( Alternative(empty, (<|>)) )
 import Data.Char (isDigit)
 import Display (display)
 
-newtype Parser a = P ([Token] -> Either String (a, [Token]))
+newtype Parser a = P ([Token] -> (Either String a, [Token]))
 
-parse :: Parser a -> [Token] -> Either String (a, [Token])
+parse :: Parser a -> [Token] -> (Either String a, [Token])
 parse (P p) = p
 
 instance Functor Parser where
     fmap g (P p) = P (\s -> case p s of
-                                Left s' -> Left s'
-                                Right (a, s') -> Right (g a, s'))
+                                (Left e, s') -> (Left e, s')
+                                (Right a, s') -> (Right (g a), s'))
 
 instance Applicative Parser where
-    pure a = P (\s -> Right (a, s))
+    pure a = P (\s -> (Right a, s))
     pg <*> px = P (\s -> case parse pg s of
-                            Left s' -> Left s'
-                            Right (g, s') -> parse (fmap g px) s')
+                            (Left e, s') -> (Left e, s')
+                            (Right g, s') -> parse (fmap g px) s')
 
 instance Monad Parser where
     p >>= f = P (\s -> case parse p s of
-                            Left s' -> Left s'
-                            Right (a, s') -> parse (f a) s')
+                            (Left e, s') -> (Left e, s')
+                            (Right a, s') -> parse (f a) s')
 
 instance Alternative Parser where
-    empty = P (\s -> Left "")
+    empty = P (\s -> (Left "", []))
     p <|> q = P (\s -> case parse p s of
-                            Left s' -> parse q s
-                            Right (a, s') -> Right (a, s'))
+                            (Left _, s') -> parse q s
+                            (Right a, s') -> (Right a, s'))
 
 item :: Parser Token
 item = P (\s -> case s of
-                    [] -> Left "Unexpected end of input"
-                    (t:ts) -> Right (t, ts))
+                    [] -> (Left "Unexpected end of input", [])
+                    (t:ts) -> (Right t, ts))
 
 eof :: Parser ()
 eof = P (\s -> case s of
-                    [] -> Right ((), [])
-                    xs -> Left $ "Expected end of input, but there are unconsumed tokens " ++ show xs)
+                    [] -> (Right (), [])
+                    xs -> (Left $ "Expected end of input, but there are unconsumed tokens " ++ show xs, []))
 
 satisfy :: String -> (Token -> Bool) -> Parser Token
         -- Error message
 satisfy m f = do t <- item
                  if f t then pure t else
                     let (r, p) = (line t, pos t) in
-                        P (\_ -> Left $ "Error around " ++ show r ++ ":" ++ show p ++ ", " ++ m ++ ", but has " ++ display t ++ ".")
+                        P (\_ -> (Left $ "Error around " ++ show r ++ ":" ++ show p ++ ", " ++ m ++ ", but has " ++ display t ++ ".", []))
 
 
 choice :: [Parser a] -> Parser a
