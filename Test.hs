@@ -40,30 +40,30 @@ main = do
 
         -- putStrLn ""
 
-        -- testSuite "Declarations" declaration testDeclarationCases
+        -- testSuite "Declarations" declaration testDeclarationCases -- OK
 
         -- putStrLn ""
 
-        -- testSuite "Functions" functionDeclaration testFunctionCases
+        -- testSuite "Functions" functionDeclaration testFunctionCases -- OK
 
         -- putStrLn ""
 
-        testSuite "Expressions" expr testExpressionCases
+        testSuite "Expressions" expr testExpressionCases -- OK, assignment expressions should be lifted out
 
         putStrLn ""
 
-        -- testSuite "Primaries" primary testPrimariesCases
+        -- testSuite "Primaries" primary testPrimariesCases -- OK
 
         -- putStrLn ""
 
-        -- testSuite "Statement" statement testStatementCases
+        -- testSuite "Statement" statement testStatementCases -- OK
 
         -- putStrLn ""
 
-        -- testSuite "Types" type_ testTypeCases
+        -- testSuite "Types" type_ testTypeCases -- OK
 
         -- putStrLn ""
 
-        -- testSuite "Patterns" pattern_ testPatternCases
+        -- testSuite "Patterns" pattern_ testPatternCases -- OK
 
         -- putStrLn ""

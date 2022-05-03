@@ -1,3 +1,3 @@
-:l Parser.hs FubukiParser.hs Lexer.hs Fragments Display TestFragments.hs 
-:m Parser FubukiParser Lexer Fragments Display TestFragments
+:l Parser FubukiParser ParseTopLevel Lexer Fragments Display TestFragments Token ParseSymbols
+:m Parser FubukiParser ParseTopLevel Lexer Fragments Display TestFragments Token ParseSymbols
 either (error . show) (display . fst) $ parse (sepByOpt int comma) (lexing "1 2 3")

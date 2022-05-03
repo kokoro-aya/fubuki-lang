@@ -85,8 +85,8 @@ instance Display TokenType where
     display FALLTHRU = "fallthrough"
     display x = map toLower $ show x
 
-instance Display Op where
-    display (Op t _) = display (tokenType t)
+-- instance Display Op where
+--     display (Op t _) = display (tokenType t)
 
 instance Display Expr where
     display (UnaryExpr op exp) = display op ++ display exp

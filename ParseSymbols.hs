@@ -1,6 +1,7 @@
 module ParseSymbols where
 import Token (TokenType(DOT, LPAREN, RPAREN, COMMA, NOT, ADD, SUB, MUL, DIV, MOD, CARET, LSHIFT, RSHIFT, APPEND, THROUGH, UNTIL, DOWNTO, DOWNTHROUGH, STEP, EQU, NEQU, XOR, AND, OR, ADDEQ, SUBEQ, MULEQ, DIVEQ, MODEQ, ASSIGN), Token (tokenType), matchInfix)
 import Parser (satisfy)
+import Data.Map
 
 
 notSymbol = satisfy "expected token \"!\"" ((== NOT) . tokenType)

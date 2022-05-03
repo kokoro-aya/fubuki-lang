@@ -1,9 +1,9 @@
 module ADT where
-import Token ( Token(tokenType) )
+import Token ( Token(tokenType), TokenType )
 import GHC.Show (Show)
 
-data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq, Show)
-
+-- data Op = Op { opType :: Token, opPrec :: Int } deriving (Eq, Show)
+type Op = TokenType
 data Expr = UnaryExpr Op Expr
           | BinaryExpr Op Expr Expr
           | PrimaryExpr Primary

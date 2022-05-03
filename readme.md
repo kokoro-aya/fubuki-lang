@@ -17,6 +17,7 @@ Current status:
     - [x] Statements, declarations and functions.
 - [x] Handle generic clauses in function declarations as well as function calls.
 - [x] Handle type annotations such as `tuple<int, tuple<int, int>>` to distinguish with `>>` symbol, however, this feature is not used in parser.
+- [ ] Fixed error messages and refactor code.
 - [ ] Type system
     - [ ] Simple type checking,
     - [ ] Type inference, 
@@ -26,6 +27,9 @@ Current status:
 Known bugs and remarks:
 
 - The error message throw out arbitrary messages that don't help to understand the error. I have tried to use non backtracking parser to resolve this but failed. As some combinators such as `leftAssociate` need this feature, the idea of non back tracking parser has been abandonned. Still, even if with the backtracking parser, one has to use `try` combinator in many places and it will make the non backtracking parser useless as one is dependent on the backtracking feature.
+- Expressions such as `1 + 2 + 3 +` could be handled by chainl1.
+- In `exprLevel4` the first op cannot be parsed, walkaround with `nop` to occupy this first position.
+- Usage of `try` in `statement` since cannot distinguish case with `a += 1` and `a + b` (or `a.foo()` as function call is also an expression). This should be eliminated but I don't have a good idea.
 - ~~Cannot really handle type annotations well, currently the colon symbol `:` is only used inside type annotations and there is a walkaround for switch statement and label argument with `=>` instead of `:`.~~ (fixed)
 - ~~The current implementation of handle `>>` forbid the symbol `>` from being used as a head of custom operator. The previous implementation of looking for `:` requires that `:` should only be used in one position i.e. the type annotation, which is impossible as it's also used in parameter labels and it's possible to be used in other future places.~~ (fixed)
 

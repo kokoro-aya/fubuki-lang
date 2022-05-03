@@ -1,10 +1,10 @@
 module FubukiParser where
 
 import Token (isLiteral, isReference, isOverridableOperator, Token (tokenType, line, pos, Token), TokenType (Ident, RSHIFT), identifierName, operatorName)
-import Parser (satisfy, sepBy1, sepEndBy1, Parser, leftAssociate, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy)
+import Parser (satisfy, sepBy1, sepEndBy1, Parser, sepByOpt, sepBy, some, many, endOptional, option, orElse, sepEndBy, chainl1, try, between)
 import ADT
 import Fragments
-    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick, genericLeft, genericRight )
+    ( intLiteral, realLiteral, charLiteral, strLiteral, boolLiteral, uline, identifier, lbracket, rbracket, column, arrow, slice, switch, lbrace, lamArr, rbrace, semicolon, lesserthanSymbol, greaterthanSymbol, leqSymbol, geqSymbol, assign, lparen, rparen, comma, for, in_, while, repeat_, if_, else_, default_, case_, break_, continue_, retn, do_, fallthrough, val, var, fn, qmark, dot, backtick, genericLeft, genericRight, nop )
 import Control.Applicative ((<|>))
 import ParseSymbols (notSymbol, addSymbol, subSymbol, mulSymbol, divSymbol, modSymbol, caretSymbol, lshiftSymbol, appendSymbol, throughSymbol, untilSymbol, downtoSymbol, downthroughSymbol, stepSymbol, eqSymbol, neqSymbol, xorSymbol, andSymbol, orSymbol, addeqSymbol, subeqSymbol, muleqSymbol, diveqSymbol, modeqSymbol, infix0, infix1, infix2, infix3, infix4, infix5, infix6, prefix7)
 import Data.Maybe
@@ -27,119 +27,143 @@ expr = do e <- exprLevel9
 exprLevel9 = exprLevel8
 
 
-exprLevel8 = leftAssociate exprLevel7 exprLevel8_1 BinaryExpr
+-- exprLevel8 = leftAssociate exprLevel7 exprLevel8_1 BinaryExpr
 
 
-exprLevel8_1 = do op <- orSymbol <|> infix0
-                  ex <- exprLevel7
-                  tm1 <- exprLevel8_1
-                  pure ((Op op 11, ex):tm1)
-                  <|> pure []
+-- exprLevel8_1 = do op <- orSymbol <|> infix0
+--                   ex <- exprLevel7
+--                   tm1 <- exprLevel8_1
+--                   pure ((Op op 11, ex):tm1)
+--                   <|> pure []
+
+exprLevel8 = binaryAssocLeft exprLevel7 (orSymbol <|> infix0)
 
 
-
-exprLevel7 = leftAssociate exprLevel6 exprLevel7_1 BinaryExpr
-
-
-exprLevel7_1 = do op <- andSymbol <|> infix1
-                  ex <- exprLevel6
-                  tm1 <- exprLevel7_1
-                  pure ((Op op 10, ex):tm1)
-                  <|> pure []
+-- exprLevel7 = leftAssociate exprLevel6 exprLevel7_1 BinaryExpr
 
 
-exprLevel6 = leftAssociate exprLevel5 exprLevel6_1 BinaryExpr
+-- exprLevel7_1 = do op <- andSymbol <|> infix1
+--                   ex <- exprLevel6
+--                   tm1 <- exprLevel7_1
+--                   pure ((Op op 10, ex):tm1)
+--                   <|> pure []
+
+exprLevel7 = binaryAssocLeft exprLevel6 (andSymbol <|> infix1)
 
 
-exprLevel6_1 = do op <- xorSymbol <|> infix2
-                  ex <- exprLevel5
-                  tm1 <- exprLevel6_1
-                  pure ((Op op 9, ex):tm1)
-                  <|> pure []
+-- exprLevel6 = leftAssociate exprLevel5 exprLevel6_1 BinaryExpr
 
 
-exprLevel5 = leftAssociate exprLevel4 exprLevel5_1 BinaryExpr
+-- exprLevel6_1 = do op <- xorSymbol <|> infix2
+--                   ex <- exprLevel5
+--                   tm1 <- exprLevel6_1
+--                   pure ((Op op 9, ex):tm1)
+--                   <|> pure []
+
+exprLevel6 = binaryAssocLeft exprLevel5 (xorSymbol <|> infix2)
 
 
-exprLevel5_1 = do op <- eqSymbol <|> neqSymbol <|> infix3
-                  ex <- exprLevel4
-                  tm1 <- exprLevel5_1
-                  pure ((Op op 8, ex):tm1)
-                  <|> pure []
+-- exprLevel5 = leftAssociate exprLevel4 exprLevel5_1 BinaryExpr
 
 
+-- exprLevel5_1 = do op <- eqSymbol <|> neqSymbol <|> infix3
+--                   ex <- exprLevel4
+--                   tm1 <- exprLevel5_1
+--                   pure ((Op op 8, ex):tm1)
+--                   <|> pure []
 
-exprLevel4 = leftAssociate exprLevel3 exprLevel4_1 BinaryExpr
+exprLevel5 = binaryAssocLeft exprLevel4 (eqSymbol <|> neqSymbol <|> infix3)
 
-
-exprLevel4_1 = do op <- lesserthanSymbol <|> greaterthanSymbol <|> leqSymbol <|> geqSymbol <|> infix4
-                  ex <- exprLevel3
-                  tm1 <- exprLevel4_1
-                  pure ((Op op 7, ex):tm1)
-                  <|> pure []
-
-
-exprLevel3 = leftAssociate exprLevel2 exprLevel3_1 BinaryExpr
+-- exprLevel4 = leftAssociate exprLevel3 exprLevel4_1 BinaryExpr
 
 
-exprLevel3_1 = do op <- throughSymbol <|> untilSymbol <|> downtoSymbol <|> downthroughSymbol <|> stepSymbol
-                  ex <- exprLevel2
-                  tm1 <- exprLevel3_1
-                  pure ((Op op 6, ex):tm1)
-                  <|> pure []
+-- exprLevel4_1 = do op <- lesserthanSymbol <|> greaterthanSymbol <|> leqSymbol <|> geqSymbol <|> infix4
+--                   ex <- exprLevel3
+--                   tm1 <- exprLevel4_1
+--                   pure ((Op op 7, ex):tm1)
+--                   <|> pure []
+
+exprLevel4 = binaryAssocLeft exprLevel3 (nop <|> lesserthanSymbol <|> greaterthanSymbol <|> leqSymbol <|> geqSymbol <|> infix4)
 
 
-exprLevel2 = leftAssociate exprLevel1 exprLevel2_1 BinaryExpr
+-- exprLevel3 = leftAssociate exprLevel2 exprLevel3_1 BinaryExpr
 
 
-exprLevel2_1 = do op <- appendSymbol
-                  ex <- exprLevel1
-                  tm1 <- exprLevel2_1
-                  pure ((Op op 5, ex):tm1)
-                  <|> pure []
+-- exprLevel3_1 = do op <- throughSymbol <|> untilSymbol <|> downtoSymbol <|> downthroughSymbol <|> stepSymbol
+--                   ex <- exprLevel2
+--                   tm1 <- exprLevel3_1
+--                   pure ((Op op 6, ex):tm1)
+--                   <|> pure []
+
+exprLevel3 = binaryAssocLeft exprLevel2 (throughSymbol <|> untilSymbol <|> downtoSymbol <|> downthroughSymbol <|> stepSymbol)
 
 
-exprLevel1 = leftAssociate exprLevel0 exprLevel1_1 BinaryExpr
+-- exprLevel2 = leftAssociate exprLevel1 exprLevel2_1 BinaryExpr
 
 
-exprLevel1_1 = do op <- lshiftSymbol <|> (do a <- greaterthanSymbol 
-                                             greaterthanSymbol
-                                             let (l, p) = (line a, pos a) in
-                                                pure $ Token RSHIFT l p)
-                  ex <- exprLevel0
-                  tm1 <- exprLevel1_1
-                  pure ((Op op 4, ex):tm1)
-                  <|> pure []
+-- exprLevel2_1 = do op <- appendSymbol
+--                   ex <- exprLevel1
+--                   tm1 <- exprLevel2_1
+--                   pure ((Op op 5, ex):tm1)
+--                   <|> pure []
+
+exprLevel2 = binaryAssocLeft exprLevel1 appendSymbol
 
 
-exprLevel0 = leftAssociate term exprLevel0_1 BinaryExpr
+-- exprLevel1 = leftAssociate exprLevel0 exprLevel1_1 BinaryExpr
 
 
-exprLevel0_1 = do op <- addSymbol <|> subSymbol <|> infix5
-                  ex <- term
-                  tm1 <- exprLevel0_1
-                  pure ((Op op 3, ex):tm1)
-                  <|> pure []
+-- exprLevel1_1 = do op <- lshiftSymbol <|> (do a <- greaterthanSymbol
+--                                              greaterthanSymbol
+--                                              let (l, p) = (line a, pos a) in
+--                                                 pure $ Token RSHIFT l p)
+--                   ex <- exprLevel0
+--                   tm1 <- exprLevel1_1
+--                   pure ((Op op 4, ex):tm1)
+--                   <|> pure []
+
+exprLevel1 = binaryAssocLeft exprLevel0 (lshiftSymbol <|> try (do a <- greaterthanSymbol
+                                                                  greaterthanSymbol
+                                                                  let (l, p) = (line a, pos a) in
+                                                                    pure $ Token RSHIFT l p))
+                                                                    -- as the GRT could be used elsewhere, make it a try to avoid consuming the token.
 
 
-term = leftAssociate expterm term1 BinaryExpr
+-- exprLevel0 = leftAssociate term exprLevel0_1 BinaryExpr
 
 
-term1 = do op <- mulSymbol <|> divSymbol <|> modSymbol <|> infix6
-           ex <- expterm
-           tm1 <- term1
-           pure ((Op op 2, ex):tm1)
-           <|> pure []
+-- exprLevel0_1 = do op <- addSymbol <|> subSymbol <|> infix5
+--                   ex <- term
+--                   tm1 <- exprLevel0_1
+--                   pure ((Op op 3, ex):tm1)
+--                   <|> pure []
+
+exprLevel0 = binaryAssocLeft term (addSymbol <|> subSymbol <|> infix5)
+
+
+-- term = leftAssociate expterm term1 BinaryExpr
+
+-- term1 = do op <- mulSymbol <|> divSymbol <|> modSymbol <|> infix6
+--            ex <- expterm
+--            tm1 <- term1
+--            pure ((Op op 2, ex):tm1)
+--            <|> pure []
+
+term = binaryAssocLeft expterm (mulSymbol <|> divSymbol <|> modSymbol <|> infix6)
+
+binaryAssocLeft :: Parser Expr -> Parser Token -> Parser Expr
+binaryAssocLeft p op = chainl1 p (do op <- op
+                                     pure $ \x y -> BinaryExpr (tokenType op) x y)
 
 expterm = do -- assoc right
             s <- subterm
             (do op <- caretSymbol
-                BinaryExpr (Op op 1) s <$> expterm)
+                BinaryExpr (tokenType op) s <$> expterm)
                 <|> pure s
 
 subterm = do
             op <- notSymbol <|> addSymbol <|> subSymbol <|> prefix7
-            UnaryExpr (Op op 0) <$> factor
+            UnaryExpr (tokenType op) <$> factor
             <|> factor
 
 factor = do p <- primary
@@ -161,27 +185,28 @@ mkParenthesis xs = TupleExpr xs
 --  Parser for primaries  --
 ----------------------------
 
-subPrimary = literalPrimary <|> functionCallPrimary <|> variablePrimary <|> (FunctionDeclarationPrimary <$> functionDeclaration)
+subPrimary = try literalPrimary <|> try functionCallPrimary <|> try variablePrimary <|> try (FunctionDeclarationPrimary <$> functionDeclaration)
 
 variablePrimary = VariablePrimary <$> pattern_
 
 literalPrimary = literal <|> arrayLiteral
 
-arrayLiteral = do
+arrayLiteral = do -- OK
                 lbracket
                 exprs <- sepEndBy1 expr comma
                 rbracket
                 pure $ ArrayPrimary exprs
 
-literal = (RealPrimary <$> realLiteral)
-                 <|>
-                     (IntPrimary <$> intLiteral)
-                     <|>
-                         (CharPrimary <$> charLiteral)
-                         <|>
-                             (StrPrimary <$> strLiteral)
-                             <|>
-                                 (BoolPrimary <$> boolLiteral)
+literal = try (RealPrimary <$> realLiteral)
+            <|>
+                try (IntPrimary <$> intLiteral)
+                <|>
+                    try (CharPrimary <$> charLiteral)
+                    <|>
+                        try (StrPrimary <$> strLiteral)
+                        <|>
+                            try (BoolPrimary <$> boolLiteral)
+                            -- 如果不加try，intLiteral的解析会失败，报EOF错误
 
 functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          gs <- option genericClause
@@ -191,7 +216,7 @@ functionCallPrimary = do f <- identifierName . tokenType <$> identifier
                          pure $ FunctionCallPrimary f (fromMaybe [] gs) args
 
 functionCallArgument = (do  i <- identifierName . tokenType <$> identifier
-                            do column 
+                            do column
                                e <- expr
                                pure (Just i, e)
                                <|> pure (Nothing, (PrimaryExpr . VariablePrimary) (IdentifierPattern i Nothing)))
@@ -281,12 +306,12 @@ switchExpression = do switch
 switchExprArm = do literalArm <|> defaultArm
 
 literalArm = do l <- literal
-                lamArr 
+                lamArr
                 r <- expr
                 pure (Just l, r)
 
 defaultArm = do uline
-                lamArr 
+                lamArr
                 r <- expr
                 pure (Nothing, r)
 
@@ -300,22 +325,21 @@ defaultArm = do uline
 
 statements = some statement
 
-statement = do  (do d <- endOptional declaration semicolon
-                    pure $ DeclStatement d)
-                <|> (do s <- endOptional assignmentStatement semicolon
-                        pure s)
-                <|> (do e <- endOptional expr semicolon
-                        pure $ ExprStatement e)
-                <|> loopStatement
-                <|> branchStatement
-                <|> (do c <- endOptional controlTransferStatement semicolon
-                        pure c)
-                <|> doStatement
+statement = (do d <- endOptional declaration semicolon
+                pure $ DeclStatement d)
+            <|> try (endOptional assignmentStatement semicolon)
+            -- need to backtrack since cannot distinguish easily the case of `a += 1` and `a ++ b`
+            <|> (do e <- endOptional expr semicolon
+                    pure $ ExprStatement e)
+            <|> loopStatement
+            <|> branchStatement
+            <|> (endOptional controlTransferStatement semicolon)
+            <|> doStatement
 
 assignmentStatement = do l <- pattern_
                          op <- addeqSymbol <|> subeqSymbol <|> muleqSymbol <|> diveqSymbol <|> modeqSymbol <|> assign
                          r <- expr
-                         pure $ AssignmentStatement (Op op 12) l r
+                         pure $ AssignmentStatement (tokenType op) l r
 
 loopStatement = forInStatement <|> whileStatement <|> repeatWhileStatement
 
@@ -360,25 +384,15 @@ switchStatement = do switch
                      pure $ SwitchStatement e s
 
 switchCase = (do xs <- caseLabel
-                 lbrace
-                 st <- statements
-                 rbrace
-                 pure $ SwitchCase xs st)
+                 SwitchCase xs <$> ((do s <- between lbrace rbrace statements
+                                        pure s) <|> statements))
                  <|> (do d <- defaultLabel
-                         lbrace
-                         st <- statements
-                         rbrace
-                         pure $ DefaultCase st)
-                         <|> (do xs <- caseLabel
-                                 st <- statements
-                                 pure $ SwitchCase xs st)
-                                     <|> (do d <- defaultLabel
-                                             st <- statements
-                                             pure $ DefaultCase st)
+                         DefaultCase <$> ((do s <- between lbrace rbrace statements
+                                              pure s) <|> statements))
 
 caseLabel = do  case_
                 xs <-sepBy1 literal comma
-                column 
+                column
                 pure xs
 
 defaultLabel = do default_
@@ -455,14 +469,14 @@ functionDeclaration = do fn
                          b <- functionBody
                          pure $ FuncDecl fnm (fromMaybe [] gc) sig res b
 
-funcName = (do  backtick 
-                n <- operatorToken 
+funcName = (do  backtick
+                n <- operatorToken
                 backtick
                 pure . OperName . operatorName . tokenType $ n)
-            <|> (do  n <- identifier 
+            <|> (do  n <- identifier
                      pure . FuncName . identifierName . tokenType $ n)
 
-genericClause = do  genericLeft 
+genericClause = do  genericLeft
                     xs <- sepBy identifier comma
                     genericRight
                     pure $ map (identifierName . tokenType) xs
@@ -481,10 +495,10 @@ parameter = do  (def, par) <- paramName
 -- _ x -> argument with default name ; x -> argument without name ; a x -> argument with specified name ; _ -> unnamed argument
 
 paramName = do  i1 <- identifier
-                (do i2 <- identifier 
+                (do i2 <- identifier
                     pure (Just . Name . identifierName . tokenType $ i1, Name . identifierName . tokenType $ i2)
                     <|> pure (Nothing, Name . identifierName . tokenType $ i1))
-            <|> (do uline 
+            <|> (do uline
                     (do x <- identifier
                         pure (Just Wildcard, Name . identifierName . tokenType $ x)
                         <|> pure (Nothing, Wildcard)))

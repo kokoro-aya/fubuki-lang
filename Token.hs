@@ -42,7 +42,8 @@ data TokenType = Numeric String
             | VAL | VAR | FN                        -- val, var, fn
             | REPEAT | SWITCH | CASE | DEFAULT      -- repeat, switch, case, default
             | DO | BREAK | CONTINUE | FALLTHRU      -- do, break, continue, fallthrough (:||)
-            | BACKTICK                              -- `
+            | BACKTICK 
+            | NOP                                   -- to lift the problem of cannot parse < in its first candidate in exprLevel4
             deriving (Eq, Show)
 
 isLiteral :: TokenType -> Bool
