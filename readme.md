@@ -1,3 +1,11 @@
+**(Archived) This project is suspended due to my lack of advanced FP techniques, a newer repository based on an imperative base language such as C# will be available sooner or later.**
+
+In fact, in order to implement the typing system (type inference included) in my language as per techniques and algorithm decribed in TAPL, it's required to use local variables and make mutations on them. This implies that, in Haskell, some advanced FP skills (State Monad, Algebraic Effects, ...) are required.
+
+Currently I prefer a priority on compiling and typing system than monad and cats hence a choice to implement my language on an imperative base language has been made. Still, this repo show the interest of achieving a parser in a FP way.
+
+---
+
 A simple imperative language implementation.
 
 The language is designed to be simple while being exposed to several interesting topics such as:
